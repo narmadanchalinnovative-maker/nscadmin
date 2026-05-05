@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "50585105381",
+    "project_id": "narmadanchalsmartclassess",
+    "storage_bucket": "narmadanchalsmartclassess.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:50585105381:android:64561b2078eb6ab06ef50c",
+        "android_client_info": {
+          "package_name": "com.example.narmadanchalsmartclassess"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "50585105381-9vc3eqtkklc1r7tbsc79od0vgusa7667.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.narmadanchalsmartclassess",
+            "certificate_hash": "d2fde31d98c8bd6fa0899797aeb65a35925a03c8"
+          }
+        },
+        {
+          "client_id": "50585105381-225jr2dte7k0q35gsbkv2aui425hgarf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtQsR_PlIH1wpNq1l4tW6f7RPF27a08rc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "50585105381-225jr2dte7k0q35gsbkv2aui425hgarf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

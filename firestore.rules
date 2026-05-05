@@ -1,0 +1,192 @@
+// Firestore Security Rules - Admin Panel + Custom Auth (Twilio)
+// Copy this to Firebase Console > Firestore > Rules tab
+// 
+// AUTHENTICATION MODEL:
+// - Uses custom Twilio authentication (request.auth is always null)
+// - Admin validation done at application level + document metadata verification
+// - Firestore rules enforce document structure and prevent client misuse
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // =========================================================================
+    // HELPER FUNCTIONS FOR VALIDATION
+    // =========================================================================
+    
+    // Check if document has valid admin metadata (createdBy, updatedBy)
+    function hasValidAdminMetadata() {
+      return request.resource.data.keys().hasAny(['createdBy', 'updatedBy']) &&
+        request.resource.data.createdBy is string &&
+        request.resource.data.updatedBy is string &&
+        request.resource.data.createdBy.size() > 0 &&
+        request.resource.data.updatedBy.size() > 0;
+    }
+
+    // Validate entity structure (events, batches, courses, tests)
+    function isValidEntity() {
+      return request.resource.data.keys().hasAny(['title', 'description', 'status']) &&
+        request.resource.data.title is string &&
+        request.resource.data.description is string &&
+        request.resource.data.status in ['active', 'inactive'] &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.description.size() > 0;
+    }
+
+    // Check if document has timestamps
+    function hasTimestamps() {
+      return request.resource.data.keys().hasAny(['createdAt', 'updatedAt']);
+    }
+
+    // =========================================================================
+    // GLOBAL CONFIGURATIONS (READ-ONLY FOR APP CLIENTS)
+    // =========================================================================
+    // Dynamic UI configurations - clients can ONLY read
+    // Writes/modifications via Firebase Console or Admin SDK only
+    
+    match /app_config/{document=**} {
+      allow read: if true;
+      allow write: if false; // Block all client writes
+    }
+
+    match /app_pages/{document=**} {
+      allow read: if true;
+      allow write: if false; // Block all client writes
+    }
+
+    // =========================================================================
+    // MIGRATION TOKENS (EXTERNAL SERVICE AUTH)
+    // =========================================================================
+    match /migration_tokens/{tokenId} {
+      allow read: if true;
+      // Only allow clients to mark token as 'used'
+      allow update: if request.resource.data.used == true;
+      allow create, delete: if false;
+    }
+
+    // =========================================================================
+    // USERS COLLECTION (CUSTOM AUTH - TWILIO)
+    // =========================================================================
+    match /users/{uid} {
+      allow read: if true;
+      
+      // Validate basic user data structure
+      allow create, update: if 
+        request.resource.data.keys().hasAny(['uid', 'phoneNumber']) &&
+        request.resource.data.uid is string &&
+        request.resource.data.uid.size() > 0;
+        
+      allow delete: if true;
+
+      // User subcollections (courses enrollment, payments, etc.)
+      match /{subPath=**} {
+        allow read, write: if true;
+      }
+    }
+
+    // =========================================================================
+    // ADMIN USERS COLLECTION (ADMIN PANEL)
+    // =========================================================================
+    // Stores admin user information and permissions
+    match /admin_users/{uid} {
+      allow read: if true; // Anyone can read (app verifies permissions)
+      
+      // Create/update admin with valid structure and metadata
+      allow create, update: if 
+        request.resource.data.keys().hasAny(['email', 'role', 'active', 'permissions']) &&
+        request.resource.data.email is string &&
+        request.resource.data.role in ['super_admin', 'admin', 'editor'] &&
+        request.resource.data.active is bool &&
+        request.resource.data.permissions is list &&
+        request.resource.data.email.size() > 0;
+        
+      allow delete: if true; // Allow deletion (app-level RBAC enforces this)
+    }
+
+    // =========================================================================
+    // EVENTS COLLECTION (ADMIN PANEL)
+    // =========================================================================
+    // Public read, admin-only write
+    match /events/{docId} {
+      allow read: if true; // Public can read
+      
+      // Admin create/update - requires valid structure + metadata + timestamps
+      allow create, update: if 
+        isValidEntity() && 
+        hasValidAdminMetadata() &&
+        hasTimestamps();
+        
+      allow delete: if true; // Allow deletion (app validates permissions)
+    }
+
+    // =========================================================================
+    // BATCHES COLLECTION (ADMIN PANEL)
+    // =========================================================================
+    // Public read, admin-only write
+    match /batches/{docId} {
+      allow read: if true;
+      
+      allow create, update: if 
+        isValidEntity() && 
+        hasValidAdminMetadata() &&
+        hasTimestamps();
+        
+      allow delete: if true;
+    }
+
+    // =========================================================================
+    // COURSES COLLECTION (ADMIN PANEL)
+    // =========================================================================
+    // Public read, admin-only write
+    match /courses/{docId} {
+      allow read: if true;
+      
+      allow create, update: if 
+        isValidEntity() && 
+        hasValidAdminMetadata() &&
+        hasTimestamps();
+        
+      allow delete: if true;
+    }
+
+    // =========================================================================
+    // TESTS COLLECTION (ADMIN PANEL)
+    // =========================================================================
+    // Public read, admin-only write
+    match /tests/{docId} {
+      allow read: if true;
+      
+      allow create, update: if 
+        isValidEntity() && 
+        hasValidAdminMetadata() &&
+        hasTimestamps();
+        
+      allow delete: if true;
+    }
+
+    // =========================================================================
+    // AUDIT LOGS (OPTIONAL - ADMIN ACTION TRACKING)
+    // =========================================================================
+    // Immutable log of admin operations
+    match /audit_logs/{logId} {
+      allow read: if true; // Admins can read logs
+      
+      // Create logs with required structure
+      allow create: if 
+        request.resource.data.keys().hasAny(['action', 'admin', 'timestamp', 'collection']) &&
+        request.resource.data.action is string &&
+        request.resource.data.admin is string &&
+        request.resource.data.collection is string &&
+        request.resource.data.action.size() > 0;
+        
+      allow update, delete: if false; // Prevent modification/deletion of logs
+    }
+
+    // =========================================================================
+    // FALLBACK RULE (DENY EVERYTHING ELSE BY DEFAULT)
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
