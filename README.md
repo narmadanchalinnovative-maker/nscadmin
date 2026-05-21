@@ -1,11 +1,11 @@
 # Next.js Admin Panel with Firebase
 
-Production-ready admin panel using **Next.js 15+**, **Firebase Auth (Google Sign-In)**, and **Firestore**.
+Production-ready admin panel using **Next.js 15+**, **Firebase Auth (Email/Password)**, and **Firestore**.
 
 ## Features
 
 ### 🔐 Authentication & Authorization
-- Google Sign-In via Firebase Auth
+- Email and password login via Firebase Auth
 - Role-based access control (super_admin, admin, editor)
 - Protected admin routes
 - Automatic admin status verification
@@ -53,7 +53,7 @@ Complete management for:
 - **Lucide React** - Icons
 
 ### Backend
-- **Firebase Authentication** - Google Sign-In
+- **Firebase Authentication** - Email/Password Sign-In
 - **Cloud Firestore** - NoSQL database
 
 ## Getting Started
@@ -75,7 +75,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Create a new project or use existing
-3. Enable **Google Authentication**
+3. Enable **Email/Password Authentication** in Firebase Auth
 4. Create **Firestore Database** (Production mode)
 5. Copy Firebase configuration
 
@@ -161,9 +161,9 @@ Create these collections with sample documents:
 
 ### 7. Add Admin User
 
-1. Sign in with Google at `/login`
-2. Add your account to Firestore `admin_users` collection
-3. Set `active: true`
+1. Create a Firebase Auth user with email and password
+2. Add the same UID to Firestore `admin_users` collection
+3. Set `active: true` and assign the required role/permissions
 
 ## Project Structure
 

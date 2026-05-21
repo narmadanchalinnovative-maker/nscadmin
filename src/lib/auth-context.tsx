@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { AdminUser } from '@/types';
+import { getAdminUser } from './auth-guards';
 
 interface AuthContextType {
   user: User | null;
@@ -26,16 +26,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (firebaseUser) {
         setUser(firebaseUser);
         try {
-          const adminDocRef = doc(db, 'admin_users', firebaseUser.uid);
-          const adminDoc = await getDoc(adminDocRef);
-          if (adminDoc.exists() && adminDoc.data().active) {
-            setAdminUser({
-              uid: firebaseUser.uid,
-              ...adminDoc.data(),
-            } as AdminUser);
-          } else {
-            setAdminUser(null);
-          }
+          const adminRecord = await getAdminUser(firebaseUser.uid, firebaseUser.email ?? undefined);
+          setAdminUser(adminRecord);
         } catch (error) {
           console.error('Error fetching admin user:', error);
           setAdminUser(null);

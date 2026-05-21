@@ -19,7 +19,7 @@ Complete step-by-step guide to set up the admin panel.
 - **Node.js**: Version 18 or higher
 - **npm or yarn**: Package manager
 - **Firebase account**: Free tier works
-- **Google account**: For authentication
+- **Email account**: For authentication
 - **Code editor**: VS Code recommended
 
 ### Check Node Version
@@ -41,14 +41,13 @@ npm --version
 4. Follow the setup wizard
 5. Click **"Create project"**
 
-### Step 2: Enable Google Authentication
+### Step 2: Enable Email/Password Authentication
 
 1. In Firebase Console, go to **Authentication** (left sidebar)
 2. Click **"Get Started"** or **"Sign-in method"**
-3. Click **"Google"** provider
+3. Open the **Email/Password** provider
 4. Toggle **"Enable"**
-5. Set project support email
-6. Click **"Save"**
+5. Click **"Save"**
 
 ### Step 3: Create Firestore Database
 
@@ -151,10 +150,10 @@ Expected output:
 
 ### Step 3: Test Application
 
-1. Open [http://localhost:3000](http://localhost:3000)
-2. You should see the home page
-3. Click **"Sign In"** button
-4. You'll be redirected to Google login (which will fail if not added as admin yet)
+3. Open [http://localhost:3000](http://localhost:3000)
+4. You should see the home page
+5. Click **"Sign In"** button
+6. Enter your admin email and password on the login page
 
 ### Step 4: Deploy Security Rules
 
@@ -182,52 +181,34 @@ firebase deploy --only firestore:rules
 
 ## Create Admin User
 
-### Step 1: Add User to Firestore
+### Step 1: Add User to Firebase Auth
 
 1. Open Firebase Console
-2. Go to **Firestore Database**
-3. Click **"Collections"** tab
-4. Click **"+ Create collection"**
-5. Name it: `admin_users`
-6. Click **"Next"**
+2. Go to **Authentication** > **Users**
+3. Click **"Add user"**
+4. Enter the admin email and password
+5. Save the user and copy the generated UID
 
 ### Step 2: Create Admin Document
 
 1. Click **"+ Add document"**
-2. Set Document ID to your **Google account UID** (you'll need to sign in first to get this)
-3. Or let Firestore auto-generate, then note the ID
-4. Add these fields:
+2. Set Document ID to the UID copied from Firebase Auth
+3. Add these fields:
 
 | Field | Type | Value |
 |-------|------|-------|
-| `email` | String | your-email@gmail.com |
+| `email` | String | your-email@example.com |
 | `role` | String | `super_admin` |
 | `active` | Boolean | `true` |
 | `permissions` | Array | `["events.read", "events.write", "batches.read", "batches.write", "courses.read", "courses.write", "tests.read", "tests.write"]` |
 
 5. Click **"Save"**
 
-### Step 3: Get Your UID
-
-If you don't have your UID:
-
-1. Remove the document you just created
-2. In dev terminal, run the app and click "Sign In"
-3. You'll see an error, but check browser console
-4. Look for your UID in Firebase Auth error message
-5. Or in Firebase Console > Authentication > Users tab
-
-### Step 4: Update Document ID
-
-1. Edit the document you created
-2. Change Document ID to your actual UID (if it's wrong)
-3. Save
-
-### Step 5: Test Login
+### Step 3: Test Login
 
 1. Refresh [http://localhost:3000](http://localhost:3000)
 2. Click **"Sign In"**
-3. Sign in with your Google account
+3. Sign in with the email and password you created in Firebase Auth
 4. Should redirect to `/admin/dashboard`
 
 ---
@@ -286,12 +267,12 @@ NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxx
 
 ## Troubleshooting
 
-### Issue: "Access Denied" After Google Login
+### Issue: "Access Denied" After Login
 
 **Solution**:
 - Verify your account exists in `admin_users` collection
 - Check `active` field is `true`
-- Verify `email` matches your Google account email
+- Verify `email` matches your Firebase Auth account email
 - Restart the app after adding admin user
 
 ### Issue: Firestore Operations Failing
@@ -310,10 +291,10 @@ NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxx
 - Check variable names start with `NEXT_PUBLIC_`
 - Don't forget to add `.env.local` to `.gitignore`
 
-### Issue: Google Sign-In Not Working
+### Issue: Email/Password Sign-In Not Working
 
 **Solution**:
-- Verify Google provider enabled in Firebase
+- Verify Email/Password provider enabled in Firebase
 - Check authorized domains include `localhost:3000`
 - Verify Firebase credentials are correct
 - Check browser console for error details
@@ -350,7 +331,7 @@ firebase deploy --only firestore:rules
 Before considering setup complete, verify:
 
 - [ ] Firebase project created
-- [ ] Google authentication enabled
+- [ ] Email/Password authentication enabled
 - [ ] Firestore database created (Production mode)
 - [ ] `.env.local` file created with Firebase credentials
 - [ ] Dev server runs: `npm run dev`

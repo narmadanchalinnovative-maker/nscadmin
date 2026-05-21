@@ -17,7 +17,7 @@ Next.js 15+ (App Router)
 ### Backend Stack
 ```
 Firebase
-├── Authentication (Google Sign-In)
+├── Authentication (Email/Password)
 └── Cloud Firestore (NoSQL Database)
 ```
 
@@ -39,7 +39,7 @@ UI Components
 src/
 ├── app/
 │   ├── login/
-│   │   └── page.tsx                 # Google Sign-In page
+│   │   └── page.tsx                 # Email/password login page
 │   ├── admin/
 │   │   ├── layout.tsx               # Admin layout wrapper
 │   │   ├── page.tsx                 # Dashboard with stats
@@ -130,8 +130,8 @@ AuthProvider checks Firebase auth state
 If not logged in → show home page with login button
     ↓
 Click "Sign In" → redirect to /login
-    ↓
-Google Sign-In popup
+  ↓
+Email/password login form
     ↓
 Verify user in admin_users collection
     ↓

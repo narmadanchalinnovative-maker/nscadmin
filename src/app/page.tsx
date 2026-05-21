@@ -71,7 +71,7 @@ export default function Home() {
             {[
               {
                 title: 'Easy Authentication',
-                description: 'Google Sign-In with role-based access control',
+                description: 'Email and password login with role-based access control',
               },
               {
                 title: 'Full CRUD Operations',
@@ -117,7 +117,7 @@ export default function Home() {
               <div>
                 <h4 className="font-semibold text-blue-400 mb-3">Backend & Database</h4>
                 <ul className="space-y-2 text-gray-300">
-                  <li>✓ Firebase Auth (Google)</li>
+                  <li>✓ Firebase Auth (Email/Password)</li>
                   <li>✓ Cloud Firestore</li>
                   <li>✓ Zod Validation</li>
                   <li>✓ TanStack Table</li>

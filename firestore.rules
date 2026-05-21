@@ -5,6 +5,7 @@
 // - Uses custom Twilio authentication (request.auth is always null)
 // - Admin validation done at application level + document metadata verification
 // - Firestore rules enforce document structure and prevent client misuse
+// - All reads are allowed (public content), writes require proper structure validation
 
 rules_version = '2';
 service cloud.firestore {
@@ -30,37 +31,77 @@ service cloud.firestore {
         request.resource.data.description is string &&
         request.resource.data.status in ['active', 'inactive'] &&
         request.resource.data.title.size() > 0 &&
-        request.resource.data.description.size() > 0;
+        request.resource.data.title.size() <= 255 &&
+        request.resource.data.description.size() > 0 &&
+        request.resource.data.description.size() <= 2000;
     }
 
+    // Validate section structure
     function isValidSection() {
-      return request.resource.data.keys().hasAll(['title', 'description', 'status', 'testId']) &&
+      return request.resource.data.keys().hasAll(['title', 'status', 'testId']) &&
         request.resource.data.title is string &&
-        request.resource.data.description is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 255 &&
         request.resource.data.status in ['active', 'inactive'] &&
         request.resource.data.testId is string &&
-        request.resource.data.title.size() > 0 &&
-        request.resource.data.testId.size() > 0;
+        request.resource.data.testId.size() > 0 &&
+        (!request.resource.data.keys().hasAny(['description']) || 
+          (request.resource.data.description is string && 
+           request.resource.data.description.size() <= 2000)) &&
+        (!request.resource.data.keys().hasAny(['order']) || 
+          request.resource.data.order is number);
     }
 
+    // Validate question structure - comprehensive validation for all question types
     function isValidQuestion() {
       return request.resource.data.keys().hasAll(['text', 'status', 'testId', 'options']) &&
         request.resource.data.text is string &&
         request.resource.data.text.size() > 0 &&
+        request.resource.data.text.size() <= 5000 &&
         request.resource.data.status in ['active', 'inactive'] &&
         request.resource.data.testId is string &&
         request.resource.data.testId.size() > 0 &&
         request.resource.data.options is list &&
         request.resource.data.options.size() >= 2 &&
-        (!request.resource.data.keys().hasAny(['marks']) || request.resource.data.marks is number) &&
-        (!request.resource.data.keys().hasAny(['negativeMarks']) || request.resource.data.negativeMarks is number) &&
-        (!request.resource.data.keys().hasAny(['correctOptionIndex']) || request.resource.data.correctOptionIndex is number) &&
-        (!request.resource.data.keys().hasAny(['correctOptionIndexes']) || request.resource.data.correctOptionIndexes is list) &&
-        (!request.resource.data.keys().hasAny(['solution']) || request.resource.data.solution is string);
+        request.resource.data.options.size() <= 20 &&
+        validateAllOptions() &&
+        (!request.resource.data.keys().hasAny(['marks']) || 
+          (request.resource.data.marks is number && 
+           request.resource.data.marks >= 0)) &&
+        (!request.resource.data.keys().hasAny(['negativeMarks']) || 
+          (request.resource.data.negativeMarks is number && 
+           request.resource.data.negativeMarks >= 0)) &&
+        (!request.resource.data.keys().hasAny(['correctOptionIndex']) || 
+          (request.resource.data.correctOptionIndex is number && 
+           request.resource.data.correctOptionIndex >= 0 &&
+           request.resource.data.correctOptionIndex < request.resource.data.options.size())) &&
+        (!request.resource.data.keys().hasAny(['correctOptionIndexes']) || 
+          (request.resource.data.correctOptionIndexes is list && 
+           request.resource.data.correctOptionIndexes.size() > 0)) &&
+        (!request.resource.data.keys().hasAny(['solution']) || 
+          (request.resource.data.solution is string && 
+           request.resource.data.solution.size() <= 5000));
     }
 
+    // Validate each option in the options array
+    function validateAllOptions() {
+      return request.resource.data.options.size() > 0 &&
+        request.resource.data.options.all(opt, 
+          opt is map && 
+          opt.keys().hasAny(['text']) &&
+          opt.text is string &&
+          opt.text.size() > 0 &&
+          opt.text.size() <= 1000 &&
+          (!opt.keys().hasAny(['image']) || 
+            (opt.image is string && opt.image.size() > 0))
+        );
+    }
+
+    // Validate embedded questions in test document
     function hasValidEmbeddedQuestions() {
-      return !request.resource.data.keys().hasAny(['questions']) || request.resource.data.questions is list;
+      return !request.resource.data.keys().hasAny(['questions']) || 
+        (request.resource.data.questions is list && 
+         request.resource.data.questions.size() <= 1000);
     }
 
     // Check if document has timestamps
@@ -91,8 +132,8 @@ service cloud.firestore {
     // =========================================================================
     match /migration_tokens/{tokenId} {
       allow read: if true;
-      // Only allow clients to mark token as 'used'
-      allow update: if request.resource.data.used == true;
+      allow update: if (request.resource.data.used == true && 
+        request.resource.data.keys().hasAll(['used']));
       allow create, delete: if false;
     }
 
@@ -106,7 +147,13 @@ service cloud.firestore {
       allow create, update: if 
         request.resource.data.keys().hasAny(['uid', 'phoneNumber']) &&
         request.resource.data.uid is string &&
-        request.resource.data.uid.size() > 0;
+        request.resource.data.uid.size() > 0 &&
+        (!request.resource.data.keys().hasAny(['name']) || 
+          (request.resource.data.name is string && 
+           request.resource.data.name.size() <= 255)) &&
+        (!request.resource.data.keys().hasAny(['email']) || 
+          (request.resource.data.email is string && 
+           request.resource.data.email.size() <= 255));
         
       allow delete: if true;
 
@@ -127,10 +174,15 @@ service cloud.firestore {
       allow create, update: if 
         request.resource.data.keys().hasAny(['email', 'role', 'active', 'permissions']) &&
         request.resource.data.email is string &&
+        request.resource.data.email.size() > 0 &&
+        request.resource.data.email.size() <= 255 &&
         request.resource.data.role in ['super_admin', 'admin', 'editor'] &&
         request.resource.data.active is bool &&
         request.resource.data.permissions is list &&
-        request.resource.data.email.size() > 0;
+        request.resource.data.permissions.size() <= 100 &&
+        (!request.resource.data.keys().hasAny(['name']) || 
+          (request.resource.data.name is string && 
+           request.resource.data.name.size() <= 255));
         
       allow delete: if true; // Allow deletion (app-level RBAC enforces this)
     }
@@ -146,7 +198,10 @@ service cloud.firestore {
       allow create, update: if 
         isValidEntity() && 
         hasValidAdminMetadata() &&
-        hasTimestamps();
+        hasTimestamps() &&
+        (!request.resource.data.keys().hasAny(['thumbnail']) || 
+          (request.resource.data.thumbnail is string && 
+           request.resource.data.thumbnail.size() > 0));
         
       allow delete: if true; // Allow deletion (app validates permissions)
     }
@@ -158,39 +213,58 @@ service cloud.firestore {
     match /batches/{docId} {
       allow read: if true;
       
-      allow create, update: if 
+      allow create, update: if (
         isValidEntity() && 
         hasValidAdminMetadata() &&
-        hasTimestamps();
+        hasTimestamps()
+      );
         
       allow delete: if true;
 
+      // Nested courses under batches
       match /courses/{courseId} {
         allow read: if true;
 
-        allow create, update: if
+        allow create, update: if (
           isValidEntity() &&
           hasValidAdminMetadata() &&
           hasTimestamps() &&
           request.resource.data.keys().hasAny(['batchId']) &&
           request.resource.data.batchId is string &&
-          request.resource.data.batchId == docId;
+          request.resource.data.batchId == docId
+        );
 
         allow delete: if true;
       }
 
+      // Nested tests under batches
       match /tests/{testId} {
         allow read: if true;
 
-        allow create, update: if
+        allow create, update: if (
           isValidEntity() &&
           hasValidAdminMetadata() &&
           hasTimestamps() &&
           request.resource.data.keys().hasAny(['batchId']) &&
           request.resource.data.batchId is string &&
-          request.resource.data.batchId == docId;
+          request.resource.data.batchId == docId &&
+          hasValidEmbeddedQuestions()
+        );
 
         allow delete: if true;
+
+        // Nested questions under tests within batches
+        match /questions/{questionId} {
+          allow read: if true;
+
+          allow create, update: if (
+            isValidQuestion() &&
+            hasValidAdminMetadata() &&
+            hasTimestamps()
+          );
+
+          allow delete: if true;
+        }
       }
     }
 
@@ -201,10 +275,11 @@ service cloud.firestore {
     match /courses/{docId} {
       allow read: if true;
       
-      allow create, update: if 
+      allow create, update: if (
         isValidEntity() && 
         hasValidAdminMetadata() &&
-        hasTimestamps();
+        hasTimestamps()
+      );
         
       allow delete: if true;
     }
@@ -213,11 +288,12 @@ service cloud.firestore {
     // TESTS COLLECTION (ADMIN PANEL)
     // =========================================================================
     // Public read, admin-only write
+    // This allows test creation at the root level and with batch linkage
     match /tests/{docId} {
       allow read: if true;
       
       // Require valid entity + admin metadata + timestamps + batch linkage
-      allow create, update: if 
+      allow create, update: if (
         isValidEntity() && 
         hasValidAdminMetadata() &&
         hasTimestamps() &&
@@ -225,9 +301,23 @@ service cloud.firestore {
         request.resource.data.batchId is string &&
         request.resource.data.batchId.size() > 0 &&
         hasValidEmbeddedQuestions() &&
-        exists(/databases/$(database)/documents/batches/$(request.resource.data.batchId));
+        exists(/databases/$(database)/documents/batches/$(request.resource.data.batchId))
+      );
         
       allow delete: if true;
+
+      // Nested questions under tests at root level
+      match /questions/{questionId} {
+        allow read: if true;
+
+        allow create, update: if (
+          isValidQuestion() &&
+          hasValidAdminMetadata() &&
+          hasTimestamps()
+        );
+
+        allow delete: if true;
+      }
     }
 
     // =========================================================================
@@ -237,11 +327,12 @@ service cloud.firestore {
     match /sections/{docId} {
       allow read: if true;
 
-      allow create, update: if
+      allow create, update: if (
         isValidSection() &&
         hasValidAdminMetadata() &&
         hasTimestamps() &&
-        exists(/databases/$(database)/documents/tests/$(request.resource.data.testId));
+        exists(/databases/$(database)/documents/tests/$(request.resource.data.testId))
+      );
 
       allow delete: if true;
     }
@@ -250,14 +341,37 @@ service cloud.firestore {
     // QUESTIONS COLLECTION (TEST CONTENT)
     // =========================================================================
     // Public read, admin-only write
+    // Root level questions collection - independent of any specific test structure
     match /questions/{docId} {
       allow read: if true;
 
-      allow create, update: if
+      allow create, update: if (
         isValidQuestion() &&
         hasValidAdminMetadata() &&
         hasTimestamps() &&
-        exists(/databases/$(database)/documents/tests/$(request.resource.data.testId));
+        exists(/databases/$(database)/documents/tests/$(request.resource.data.testId))
+      );
+
+      allow delete: if true;
+    }
+
+    // =========================================================================
+    // STUDENT RESPONSES COLLECTION (STUDENT ATTEMPT DATA)
+    // =========================================================================
+    match /student_responses/{responseId} {
+      allow read: if true;
+
+      allow create, update: if (
+        request.resource.data.keys().hasAll(['studentId', 'testId', 'questionId', 'selectedOptionIndex', 'timestamp']) &&
+        request.resource.data.studentId is string &&
+        request.resource.data.studentId.size() > 0 &&
+        request.resource.data.testId is string &&
+        request.resource.data.testId.size() > 0 &&
+        request.resource.data.questionId is string &&
+        request.resource.data.questionId.size() > 0 &&
+        request.resource.data.selectedOptionIndex is number &&
+        request.resource.data.timestamp is timestamp
+      );
 
       allow delete: if true;
     }
@@ -267,17 +381,22 @@ service cloud.firestore {
     // =========================================================================
     // Immutable log of admin operations
     match /audit_logs/{logId} {
-      allow read: if true; // Admins can read logs
+      allow read: if true;
       
-      // Create logs with required structure
-      allow create: if 
-        request.resource.data.keys().hasAny(['action', 'admin', 'timestamp', 'collection']) &&
+      allow create: if (
+        request.resource.data.keys().hasAll(['action', 'admin', 'timestamp', 'collection']) &&
         request.resource.data.action is string &&
         request.resource.data.admin is string &&
         request.resource.data.collection is string &&
-        request.resource.data.action.size() > 0;
+        request.resource.data.action.size() > 0 &&
+        request.resource.data.admin.size() > 0 &&
+        request.resource.data.collection.size() > 0 &&
+        request.resource.data.timestamp is timestamp &&
+        (!request.resource.data.keys().hasAny(['details']) || 
+          request.resource.data.details is map)
+      );
         
-      allow update, delete: if false; // Prevent modification/deletion of logs
+      allow update, delete: if false;
     }
 
     // =========================================================================
