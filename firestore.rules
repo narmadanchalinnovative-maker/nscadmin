@@ -16,7 +16,7 @@ service cloud.firestore {
     
     // Check if document has valid admin metadata (createdBy, updatedBy)
     function hasValidAdminMetadata() {
-      return request.resource.data.keys().hasAny(['createdBy', 'updatedBy']) &&
+      return request.resource.data.keys().hasAll(['createdBy', 'updatedBy']) &&
         request.resource.data.createdBy is string &&
         request.resource.data.updatedBy is string &&
         request.resource.data.createdBy.size() > 0 &&
@@ -33,9 +33,41 @@ service cloud.firestore {
         request.resource.data.description.size() > 0;
     }
 
+    function isValidSection() {
+      return request.resource.data.keys().hasAll(['title', 'description', 'status', 'testId']) &&
+        request.resource.data.title is string &&
+        request.resource.data.description is string &&
+        request.resource.data.status in ['active', 'inactive'] &&
+        request.resource.data.testId is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.testId.size() > 0;
+    }
+
+    function isValidQuestion() {
+      return request.resource.data.keys().hasAll(['text', 'status', 'testId', 'options']) &&
+        request.resource.data.text is string &&
+        request.resource.data.text.size() > 0 &&
+        request.resource.data.status in ['active', 'inactive'] &&
+        request.resource.data.testId is string &&
+        request.resource.data.testId.size() > 0 &&
+        request.resource.data.options is list &&
+        request.resource.data.options.size() >= 2 &&
+        (!request.resource.data.keys().hasAny(['marks']) || request.resource.data.marks is number) &&
+        (!request.resource.data.keys().hasAny(['negativeMarks']) || request.resource.data.negativeMarks is number) &&
+        (!request.resource.data.keys().hasAny(['correctOptionIndex']) || request.resource.data.correctOptionIndex is number) &&
+        (!request.resource.data.keys().hasAny(['correctOptionIndexes']) || request.resource.data.correctOptionIndexes is list) &&
+        (!request.resource.data.keys().hasAny(['solution']) || request.resource.data.solution is string);
+    }
+
+    function hasValidEmbeddedQuestions() {
+      return !request.resource.data.keys().hasAny(['questions']) || request.resource.data.questions is list;
+    }
+
     // Check if document has timestamps
     function hasTimestamps() {
-      return request.resource.data.keys().hasAny(['createdAt', 'updatedAt']);
+      return request.resource.data.keys().hasAll(['createdAt', 'updatedAt']) &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp;
     }
 
     // =========================================================================
@@ -132,6 +164,34 @@ service cloud.firestore {
         hasTimestamps();
         
       allow delete: if true;
+
+      match /courses/{courseId} {
+        allow read: if true;
+
+        allow create, update: if
+          isValidEntity() &&
+          hasValidAdminMetadata() &&
+          hasTimestamps() &&
+          request.resource.data.keys().hasAny(['batchId']) &&
+          request.resource.data.batchId is string &&
+          request.resource.data.batchId == docId;
+
+        allow delete: if true;
+      }
+
+      match /tests/{testId} {
+        allow read: if true;
+
+        allow create, update: if
+          isValidEntity() &&
+          hasValidAdminMetadata() &&
+          hasTimestamps() &&
+          request.resource.data.keys().hasAny(['batchId']) &&
+          request.resource.data.batchId is string &&
+          request.resource.data.batchId == docId;
+
+        allow delete: if true;
+      }
     }
 
     // =========================================================================
@@ -156,11 +216,49 @@ service cloud.firestore {
     match /tests/{docId} {
       allow read: if true;
       
+      // Require valid entity + admin metadata + timestamps + batch linkage
       allow create, update: if 
         isValidEntity() && 
         hasValidAdminMetadata() &&
-        hasTimestamps();
+        hasTimestamps() &&
+        request.resource.data.keys().hasAny(['batchId']) &&
+        request.resource.data.batchId is string &&
+        request.resource.data.batchId.size() > 0 &&
+        hasValidEmbeddedQuestions() &&
+        exists(/databases/$(database)/documents/batches/$(request.resource.data.batchId));
         
+      allow delete: if true;
+    }
+
+    // =========================================================================
+    // SECTIONS COLLECTION (TEST CONTENT)
+    // =========================================================================
+    // Public read, admin-only write
+    match /sections/{docId} {
+      allow read: if true;
+
+      allow create, update: if
+        isValidSection() &&
+        hasValidAdminMetadata() &&
+        hasTimestamps() &&
+        exists(/databases/$(database)/documents/tests/$(request.resource.data.testId));
+
+      allow delete: if true;
+    }
+
+    // =========================================================================
+    // QUESTIONS COLLECTION (TEST CONTENT)
+    // =========================================================================
+    // Public read, admin-only write
+    match /questions/{docId} {
+      allow read: if true;
+
+      allow create, update: if
+        isValidQuestion() &&
+        hasValidAdminMetadata() &&
+        hasTimestamps() &&
+        exists(/databases/$(database)/documents/tests/$(request.resource.data.testId));
+
       allow delete: if true;
     }
 

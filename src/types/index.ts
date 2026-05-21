@@ -25,11 +25,39 @@ export interface Event extends BaseEntity {
   thumbnail?: string;
 }
 
-export interface Batch extends BaseEntity {}
+export type Batch = BaseEntity;
 
-export interface Course extends BaseEntity {}
+export interface Course extends BaseEntity {
+  batchId: string;
+}
 
-export interface Test extends BaseEntity {}
+export interface Test extends BaseEntity {
+  batchId: string;
+  questions?: Question[];
+}
+
+export interface Section extends BaseEntity {
+  testId: string;
+  order?: number;
+}
+
+export interface Option {
+  id?: string;
+  text: string;
+  image?: string;
+}
+
+export interface Question extends BaseEntity {
+  id?: string;
+  testId: string;
+  text: string;
+  options: Option[];
+  correctOptionIndex?: number;
+  correctOptionIndexes?: number[];
+  marks?: number;
+  negativeMarks?: number;
+  solution?: string;
+}
 
 export interface AppConfig {
   key: string;

@@ -6,16 +6,16 @@ import {
   updateDoc,
   deleteDoc,
   getDocs,
+  collectionGroup,
   getDoc,
   query,
   where,
-  orderBy,
+  documentId,
   limit,
-  startAfter,
+  orderBy,
   QueryConstraint,
   Timestamp,
   writeBatch,
-  DocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { BaseEntity, PaginatedResponse } from '@/types';
@@ -92,6 +92,39 @@ export async function deleteDocument(
   }
 }
 
+export async function setBatchChildDocument<T extends BaseEntity & { batchId: string }>(
+  collectionName: 'courses' | 'tests',
+  docId: string,
+  data: T & { id?: string }
+): Promise<void> {
+  try {
+    await setDoc(
+      doc(db, 'batches', data.batchId, collectionName, docId),
+      {
+        ...data,
+        id: docId,
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error(`Error syncing ${collectionName} to batch ${data.batchId}:`, error);
+    throw error;
+  }
+}
+
+export async function deleteBatchChildDocument(
+  collectionName: 'courses' | 'tests',
+  batchId: string,
+  docId: string
+): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'batches', batchId, collectionName, docId));
+  } catch (error) {
+    console.error(`Error deleting ${collectionName} from batch ${batchId}:`, error);
+    throw error;
+  }
+}
+
 export async function toggleStatus(
   collectionName: string,
   docId: string,
@@ -99,19 +132,19 @@ export async function toggleStatus(
   userId: string
 ): Promise<void> {
   const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-  await updateDocument(collectionName, docId, { status: newStatus } as any, userId);
+  await updateDocument<BaseEntity>(collectionName, docId, { status: newStatus }, userId);
 }
 
 export async function listDocuments<T extends BaseEntity>(
   collectionName: string,
   page: number = 1,
   limit: number = 10,
-  filters?: Record<string, any>,
+  filters?: Record<string, unknown>,
   sortBy: string = 'createdAt',
   sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<PaginatedResponse<T & { id: string }>> {
   try {
-    let constraints: QueryConstraint[] = [];
+    const constraints: QueryConstraint[] = [];
 
     // Add filters
     if (filters) {
@@ -218,3 +251,25 @@ export async function batchDelete(
     throw error;
   }
 }
+
+export async function findDocumentInCollectionGroup<T extends BaseEntity>(
+  collectionName: string,
+  docId: string
+): Promise<(T & { id: string; ref?: any }) | null> {
+  try {
+    const cg = collectionGroup(db, collectionName);
+    const snap = await getDocs(cg);
+    if (snap.empty) return null;
+    const d = snap.docs.find((docSnap) => docSnap.id === docId);
+    if (!d) return null;
+    return { id: d.id, ref: d.ref, ...(d.data() as T) } as T & { id: string; ref?: any };
+  } catch (error) {
+    console.error(`Error finding ${collectionName} in collectionGroup:`, error);
+    throw error;
+  }
+}
+
+// Re-export a small set of firebase/firestore helpers for compatibility with
+// modules that previously imported them from this file. Prefer using the
+// higher-level helpers above; these exports exist as a compatibility shim.
+export { collectionGroup, getDocs, query, where, documentId, limit, doc };

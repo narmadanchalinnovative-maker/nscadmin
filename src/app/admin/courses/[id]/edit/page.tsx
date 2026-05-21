@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { courseService } from '@/lib/services/courses';
+import { batchService } from '@/lib/services/batches';
 import { Course } from '@/types';
-import { createCourseFormSchema } from '@/schemas';
+import { createCourseFormSchema, CreateCourseFormSchema } from '@/schemas';
 import { EntityForm } from '@/components/admin/EntityForm';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,6 +16,7 @@ export default function EditCoursePage() {
   const params = useParams();
   const { adminUser } = useAuth();
   const [course, setCourse] = useState<Course & { id: string } | null>(null);
+  const [batchOptions, setBatchOptions] = useState<Array<{ label: string; value: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -23,7 +25,16 @@ export default function EditCoursePage() {
   useEffect(() => {
     async function fetchCourse() {
       try {
-        const data = await courseService.get(courseId);
+        const [data, batches] = await Promise.all([
+          courseService.get(courseId),
+          batchService.list(1, 100),
+        ]);
+        setBatchOptions(
+          batches.data.map((batch) => ({
+            label: batch.title || 'Untitled',
+            value: batch.id,
+          }))
+        );
         if (data) {
           setCourse(data);
         } else {
@@ -42,7 +53,7 @@ export default function EditCoursePage() {
     fetchCourse();
   }, [courseId, router]);
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: CreateCourseFormSchema) => {
     if (!adminUser?.uid || !course) {
       toast.error('User not authenticated');
       return;
@@ -82,6 +93,7 @@ export default function EditCoursePage() {
         schema={createCourseFormSchema}
         defaultValues={{
           title: course.title,
+          batchId: course.batchId,
           description: course.description,
           status: course.status,
         }}
@@ -96,6 +108,13 @@ export default function EditCoursePage() {
             type: 'text',
             placeholder: 'Enter course title',
             required: true,
+          },
+          {
+            name: 'batchId',
+            label: 'Batch',
+            type: 'select',
+            required: true,
+            options: batchOptions,
           },
           {
             name: 'description',
