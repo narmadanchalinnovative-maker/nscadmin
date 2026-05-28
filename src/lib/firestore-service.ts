@@ -26,8 +26,14 @@ export async function createDocument<T extends BaseEntity>(
   userId: string
 ): Promise<string> {
   try {
+    // Remove undefined fields (Firestore does not accept undefined values)
+    const payload: Record<string, any> = {};
+    Object.entries(data).forEach(([k, v]) => {
+      if (v !== undefined) payload[k] = v;
+    });
+
     const docRef = await addDoc(collection(db, collectionName), {
-      ...data,
+      ...payload,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       createdBy: userId,
@@ -68,8 +74,14 @@ export async function updateDocument<T extends BaseEntity>(
 ): Promise<void> {
   try {
     const docRef = doc(db, collectionName, docId);
+    // Remove undefined fields so we don't send unsupported values to Firestore
+    const payload: Record<string, any> = {};
+    Object.entries(data).forEach(([k, v]) => {
+      if (v !== undefined) payload[k] = v;
+    });
+
     await updateDoc(docRef, {
-      ...data,
+      ...payload,
       updatedAt: Timestamp.now(),
       updatedBy: userId,
     });

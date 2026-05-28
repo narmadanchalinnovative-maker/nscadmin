@@ -98,6 +98,29 @@ export const createTestFormSchema = z.object({
   status: statusSchema.default('active'),
 });
 
+export const liveClassSchema = baseEntitySchema.extend({
+  startTime: z.date().optional(),
+  duration: z.number().optional(),
+  meetingUrl: z.string().url().optional().or(z.literal('')),
+  instructor: z.string().optional().or(z.literal('')),
+  courseId: z.string().optional().or(z.literal('')),
+  batchId: z.string().optional().or(z.literal('')),
+  isLive: z.boolean().optional(),
+  recordingUrl: z.string().url().optional().or(z.literal('')),
+});
+
+export const createLiveClassFormSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  description: z.string().min(1, 'Description is required').max(2000),
+  startTime: z.string().optional().or(z.literal('')),
+  duration: z.number().optional(),
+  meetingUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  instructor: z.string().optional().or(z.literal('')),
+  courseId: z.string().optional().or(z.literal('')),
+  batchId: z.string().optional().or(z.literal('')),
+  status: statusSchema.default('active'),
+});
+
 export type AdminUserSchema = z.infer<typeof adminUserSchema>;
 export type EventSchema = z.infer<typeof eventSchema>;
 export type BatchSchema = z.infer<typeof batchSchema>;
@@ -110,3 +133,4 @@ export type CreateEventFormSchema = z.infer<typeof createEventFormSchema>;
 export type CreateBatchFormSchema = z.infer<typeof createBatchFormSchema>;
 export type CreateCourseFormSchema = z.infer<typeof createCourseFormSchema>;
 export type CreateTestFormSchema = z.infer<typeof createTestFormSchema>;
+export type CreateLiveClassFormSchema = z.infer<typeof createLiveClassFormSchema>;

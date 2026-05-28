@@ -360,6 +360,27 @@ After successful setup:
 
 ---
 
+## Zoom Web SDK setup (optional)
+
+1. Create a Zoom SDK (Web) App in the Zoom App Marketplace and obtain `SDK Key` and `SDK Secret` (server-side secret).
+2. Add the following environment variables to your hosting environment or local `.env` (do NOT commit secrets):
+
+```
+ZOOM_SDK_KEY=your_sdk_key_here
+ZOOM_SDK_SECRET=your_sdk_secret_here
+```
+
+3. Implement server-side signature generation. A template API endpoint exists at `src/app/api/zoom/signature/route.ts` — update it to generate a valid signature using your `ZOOM_SDK_KEY` and `ZOOM_SDK_SECRET` per Zoom Web SDK docs. Do NOT return your secret to the client.
+
+4. In the admin Live Classes list you can set `meetingUrl` for a class. The UI will attempt to call `/api/zoom/signature` and use the Zoom Web SDK to join; if the signature endpoint is not implemented the helper falls back to opening the meeting URL in a new tab.
+
+5. For secure production, host the signature endpoint on your server and restrict access to authorized users only.
+
+Notes:
+- Zoom's signing algorithm and required fields can change; follow Zoom's official documentation for the correct implementation and SDK version.
+- If you prefer not to use the Web SDK, provide the full Zoom meeting URL in `meetingUrl` and the admin UI will open it in a new tab to launch the Zoom client.
+
+
 ## Support Resources
 
 - **Firebase Docs**: https://firebase.google.com/docs

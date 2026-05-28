@@ -25,6 +25,17 @@ export interface Event extends BaseEntity {
   thumbnail?: string;
 }
 
+export interface LiveClass extends BaseEntity {
+  startTime?: Date;
+  duration?: number; // in minutes
+  meetingUrl?: string;
+  instructor?: string;
+  courseId?: string;
+  batchId?: string;
+  isLive?: boolean;
+  recordingUrl?: string;
+}
+
 export type Batch = BaseEntity;
 
 export interface Course extends BaseEntity {

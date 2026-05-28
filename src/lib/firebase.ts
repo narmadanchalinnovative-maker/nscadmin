@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,14 +16,16 @@ const firebaseConfig = {
 let app;
 let auth: Auth;
 let db: Firestore;
+let storage: FirebaseStorage | undefined;
 
 if (typeof window !== 'undefined') {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
+  storage = getStorage(app);
 } else {
   // For server-side, we just initialize but don't use auth
   app = initializeApp(firebaseConfig);
 }
 
-export { auth, db, app };
+export { auth, db, app, storage };

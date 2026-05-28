@@ -9,6 +9,7 @@ import {
   BookOpen,
   Users,
   CheckSquare,
+  Video,
   Menu,
   X,
   LogOut,
@@ -22,6 +23,7 @@ const menuItems = [
   { label: 'Batches', href: '/admin/batches', icon: Users },
   { label: 'Courses', href: '/admin/courses', icon: BookOpen },
   { label: 'Tests', href: '/admin/tests', icon: CheckSquare },
+  { label: 'Live Classes', href: '/admin/live-classes', icon: Video },
 ];
 
 export function Sidebar() {
