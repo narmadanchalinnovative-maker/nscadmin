@@ -98,13 +98,13 @@ export default function EditQuestionPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">Edit Question</h1>
+      <h1 className="text-2xl font-bold mb-4 text-gray-900">Edit Question</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-lg shadow">
         <input type="hidden" {...register('testId')} />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
-          <textarea {...register('text')} rows={3} className="w-full px-4 py-2 border rounded-lg" />
+          <textarea {...register('text')} rows={3} className="w-full px-4 py-2 border rounded-lg text-gray-900" />
         </div>
 
         <div>
@@ -112,7 +112,7 @@ export default function EditQuestionPage() {
           <div className="space-y-2">
             {fields.map((field, idx) => (
               <div key={field.id} className="flex gap-2">
-                <input {...register(`options.${idx}.text`)} placeholder={`Option ${idx + 1}`} className="flex-1 px-3 py-2 border rounded" />
+                <input {...register(`options.${idx}.text`)} placeholder={`Option ${idx + 1}`} className="flex-1 px-3 py-2 border rounded text-gray-900" />
                 <label className="flex items-center gap-2">
                   <input type="radio" {...register('correctOptionIndex')} value={String(idx)} />
                   <span className="text-sm">Correct</span>
@@ -131,21 +131,21 @@ export default function EditQuestionPage() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Marks</label>
-            <input {...register('marks')} type="number" className="w-full px-3 py-2 border rounded" />
+            <input {...register('marks')} type="number" className="w-full px-3 py-2 border rounded text-gray-900" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Negative Marks</label>
-            <input {...register('negativeMarks')} type="number" className="w-full px-3 py-2 border rounded" />
+            <input {...register('negativeMarks')} type="number" className="w-full px-3 py-2 border rounded text-gray-900" />
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Solution / Explanation</label>
-          <textarea {...register('solution')} rows={4} className="w-full px-4 py-2 border rounded-lg" />
+          <textarea {...register('solution')} rows={4} className="w-full px-4 py-2 border rounded-lg text-gray-900" />
         </div>
 
         <div className="flex gap-3 pt-4">
-          <button type="button" onClick={() => router.back()} className="px-4 py-2 border rounded-lg">Cancel</button>
+          <button type="button" onClick={() => router.back()} className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
           <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">Save Question</button>
         </div>
       </form>

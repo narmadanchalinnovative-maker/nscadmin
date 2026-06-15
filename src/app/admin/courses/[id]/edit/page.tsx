@@ -95,6 +95,7 @@ export default function EditCoursePage() {
           title: course.title,
           batchId: course.batchId,
           description: course.description,
+          price: course.price ?? 0,
           status: course.status,
         }}
         onSubmit={handleSubmit}
@@ -122,6 +123,13 @@ export default function EditCoursePage() {
             type: 'textarea',
             placeholder: 'Enter course description',
             required: true,
+          },
+          {
+            name: 'price',
+            label: 'Price (₹)',
+            type: 'number',
+            placeholder: 'Enter price (e.g. 12500)',
+            required: false,
           },
           {
             name: 'status',

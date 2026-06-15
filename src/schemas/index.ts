@@ -18,6 +18,7 @@ export const baseEntitySchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
+  price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
   status: statusSchema,
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
@@ -31,7 +32,16 @@ export const eventSchema = baseEntitySchema.extend({
 
 export const batchSchema = baseEntitySchema;
 
-export const courseSchema = baseEntitySchema;
+export const courseSchema = baseEntitySchema.extend({
+  batchId: z.string().min(1, 'Batch is required'),
+});
+
+export const lectureSchema = baseEntitySchema.extend({
+  courseId: z.string().min(1, 'Course is required'),
+  videoUrl: z.string().url().optional().or(z.literal('')),
+  videoPath: z.string().optional().or(z.literal('')),
+  order: z.number().optional(),
+});
 
 export const testSchema = baseEntitySchema.extend({
   batchId: z.string().min(1, 'Batch is required'),
@@ -82,12 +92,22 @@ export const createEventFormSchema = z.object({
 export const createBatchFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
+  price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
   status: statusSchema.default('active'),
 });
 
 export const createCourseFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
+  batchId: z.string().min(1, 'Batch is required'),
   description: z.string().min(1, 'Description is required').max(2000),
+  price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
+  status: statusSchema.default('active'),
+});
+
+export const createLectureFormSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  description: z.string().min(1, 'Description is required').max(2000),
+  videoUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   status: statusSchema.default('active'),
 });
 
@@ -121,10 +141,22 @@ export const createLiveClassFormSchema = z.object({
   status: statusSchema.default('active'),
 });
 
+export const examGoalSchema = z.object({
+  id: z.string().optional(),
+  label: z.string().min(1, 'Label is required'),
+  order: z.number().optional().default(0),
+});
+
+export const createExamGoalFormSchema = z.object({
+  label: z.string().min(1, 'Label is required'),
+  order: z.number().optional().default(0),
+});
+
 export type AdminUserSchema = z.infer<typeof adminUserSchema>;
 export type EventSchema = z.infer<typeof eventSchema>;
 export type BatchSchema = z.infer<typeof batchSchema>;
 export type CourseSchema = z.infer<typeof courseSchema>;
+export type LectureSchema = z.infer<typeof lectureSchema>;
 export type TestSchema = z.infer<typeof testSchema>;
 export type SectionSchema = z.infer<typeof sectionSchema>;
 export type OptionSchema = z.infer<typeof optionSchema>;
@@ -132,5 +164,8 @@ export type QuestionSchema = z.infer<typeof questionSchema>;
 export type CreateEventFormSchema = z.infer<typeof createEventFormSchema>;
 export type CreateBatchFormSchema = z.infer<typeof createBatchFormSchema>;
 export type CreateCourseFormSchema = z.infer<typeof createCourseFormSchema>;
+export type CreateLectureFormSchema = z.infer<typeof createLectureFormSchema>;
 export type CreateTestFormSchema = z.infer<typeof createTestFormSchema>;
 export type CreateLiveClassFormSchema = z.infer<typeof createLiveClassFormSchema>;
+export type ExamGoalSchema = z.infer<typeof examGoalSchema>;
+export type CreateExamGoalFormSchema = z.infer<typeof createExamGoalFormSchema>;

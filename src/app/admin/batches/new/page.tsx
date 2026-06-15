@@ -56,6 +56,13 @@ export default function CreateBatchPage() {
             required: true,
           },
           {
+            name: 'price',
+            label: 'Price (₹)',
+            type: 'number',
+            placeholder: 'Enter price (e.g. 12500)',
+            required: false,
+          },
+          {
             name: 'status',
             label: 'Status',
             type: 'select',

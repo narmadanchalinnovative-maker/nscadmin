@@ -55,9 +55,9 @@ export default function CreateTestPage() {
 
     try {
       setLoading(true);
-      await testService.create(formData, adminUser.uid);
+      const testId = await testService.create(formData, adminUser.uid);
       toast.success('Test created successfully');
-      router.push('/admin/tests');
+      router.push(`/admin/tests/${testId}/questions`);
     } catch (error) {
       console.error('Error creating test:', error);
       toast.error('Failed to create test');
@@ -68,7 +68,7 @@ export default function CreateTestPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-2">Create New Test</h1>
+      <h1 className="text-3xl font-bold mb-2 text-gray-900">Create New Test</h1>
       <p className="text-gray-600 mb-6">Create a test and add questions after</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-lg shadow">
@@ -79,7 +79,7 @@ export default function CreateTestPage() {
           <input
             {...register('title')}
             placeholder="Enter test title"
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
           />
           {errors.title && <p className="mt-1 text-sm text-red-600">{String(errors.title?.message)}</p>}
         </div>
@@ -91,7 +91,7 @@ export default function CreateTestPage() {
             </label>
             <select
               {...register('batchId')}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               <option value="">Select Batch</option>
               {batchOptions.map((opt) => (
@@ -109,7 +109,7 @@ export default function CreateTestPage() {
             </label>
             <select
               {...register('status')}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               <option value="">Select Status</option>
               <option value="active">Active</option>
@@ -127,7 +127,7 @@ export default function CreateTestPage() {
             {...register('description')}
             placeholder="Enter test description"
             rows={3}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
           />
           {errors.description && <p className="mt-1 text-sm text-red-600">{String(errors.description?.message)}</p>}
         </div>
@@ -136,7 +136,7 @@ export default function CreateTestPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium text-gray-700"
           >
             Cancel
           </button>
@@ -145,7 +145,7 @@ export default function CreateTestPage() {
             disabled={isSubmitting || loading}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium"
           >
-            {isSubmitting || loading ? 'Saving...' : 'Create Test'}
+            {isSubmitting || loading ? 'Saving...' : 'Next'}
           </button>
         </div>
       </form>

@@ -102,6 +102,7 @@ export default function TestsListPage() {
           onDelete={handleDelete}
           onToggleStatus={handleToggleStatus}
           onPageChange={setCurrentPage}
+          onNext={(item) => router.push(`/admin/tests/${item.id}/questions`)}
         />
       )}
     </div>

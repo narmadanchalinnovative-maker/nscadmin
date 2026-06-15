@@ -13,6 +13,8 @@ import {
   Menu,
   X,
   LogOut,
+  Target,
+  Activity,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -24,6 +26,8 @@ const menuItems = [
   { label: 'Courses', href: '/admin/courses', icon: BookOpen },
   { label: 'Tests', href: '/admin/tests', icon: CheckSquare },
   { label: 'Live Classes', href: '/admin/live-classes', icon: Video },
+  { label: 'Exam Goals', href: '/admin/exam-goals', icon: Target },
+  { label: 'Goal Logs', href: '/admin/goal-logs', icon: Activity },
 ];
 
 export function Sidebar() {

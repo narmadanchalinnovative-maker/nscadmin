@@ -206,12 +206,12 @@ export default function NewQuestionPage() {
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-2">Add Questions</h1>
+      <h1 className="text-3xl font-bold mb-2 text-gray-900">Add Questions</h1>
       <p className="text-gray-600 mb-6">Add single or multiple questions to this test</p>
 
       {/* Mode Selection */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold mb-4">Creation Mode</h2>
+        <h2 className="text-lg font-semibold mb-4 text-gray-900">Creation Mode</h2>
         <div className="flex gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -245,7 +245,7 @@ export default function NewQuestionPage() {
               {...register('text')}
               rows={3}
               placeholder="Enter question text"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             />
           </div>
 
@@ -259,7 +259,7 @@ export default function NewQuestionPage() {
                   <input
                     {...register(`options.${idx}.text`)}
                     placeholder={`Option ${idx + 1}`}
-                    className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   />
                   <label className="flex items-center gap-2 whitespace-nowrap">
                     <input type="radio" {...register('correctOptionIndex')} value={String(idx)} />
@@ -291,11 +291,11 @@ export default function NewQuestionPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Marks</label>
-              <input {...register('marks', { valueAsNumber: true })} type="number" defaultValue={4} className="w-full px-3 py-2 border rounded-lg" />
+              <input {...register('marks', { valueAsNumber: true })} type="number" defaultValue={4} className="w-full px-3 py-2 border rounded-lg text-gray-900" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Negative Marks</label>
-              <input {...register('negativeMarks', { valueAsNumber: true })} type="number" defaultValue={1} className="w-full px-3 py-2 border rounded-lg" />
+              <input {...register('negativeMarks', { valueAsNumber: true })} type="number" defaultValue={1} className="w-full px-3 py-2 border rounded-lg text-gray-900" />
             </div>
           </div>
 
@@ -305,7 +305,7 @@ export default function NewQuestionPage() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => router.back()} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button type="button" onClick={() => router.back()} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
               Cancel
             </button>
             <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
@@ -320,7 +320,7 @@ export default function NewQuestionPage() {
         <form onSubmit={handleBulkSubmit(onBulkSubmit)} className="space-y-4">
           <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Bulk Add Questions</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Bulk Add Questions</h2>
               <button
                 type="button"
                 onClick={() =>
@@ -362,7 +362,7 @@ export default function NewQuestionPage() {
                         {...registerBulk(`questions.${qIdx}.text`)}
                         placeholder="Enter question text"
                         rows={2}
-                        className="w-full px-3 py-2 border rounded-lg"
+                        className="w-full px-3 py-2 border rounded-lg text-gray-900"
                       />
                     </div>
 
@@ -376,7 +376,7 @@ export default function NewQuestionPage() {
                             key={optIdx}
                             {...registerBulk(`questions.${qIdx}.options.${optIdx}.text`)}
                             placeholder={`Option ${optIdx + 1}`}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                            className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900"
                           />
                         ))}
                       </div>
@@ -391,7 +391,7 @@ export default function NewQuestionPage() {
                           min="0"
                           max="3"
                           defaultValue={0}
-                          className="w-full px-2 py-2 border rounded text-sm"
+                          className="w-full px-2 py-2 border rounded text-sm text-gray-900"
                         />
                       </div>
                       <div>
@@ -400,7 +400,7 @@ export default function NewQuestionPage() {
                           {...registerBulk(`questions.${qIdx}.marks`, { valueAsNumber: true })}
                           type="number"
                           defaultValue={4}
-                          className="w-full px-2 py-2 border rounded text-sm"
+                          className="w-full px-2 py-2 border rounded text-sm text-gray-900"
                         />
                       </div>
                       <div>
@@ -409,7 +409,7 @@ export default function NewQuestionPage() {
                           {...registerBulk(`questions.${qIdx}.negativeMarks`, { valueAsNumber: true })}
                           type="number"
                           defaultValue={1}
-                          className="w-full px-2 py-2 border rounded text-sm"
+                          className="w-full px-2 py-2 border rounded text-sm text-gray-900"
                         />
                       </div>
                     </div>
@@ -420,7 +420,7 @@ export default function NewQuestionPage() {
                         {...registerBulk(`questions.${qIdx}.solution`)}
                         placeholder="Enter solution"
                         rows={2}
-                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                        className="w-full px-3 py-2 border rounded-lg text-sm text-gray-900"
                       />
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export default function NewQuestionPage() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => router.back()} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button type="button" onClick={() => router.back()} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
               Cancel
             </button>
             <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">

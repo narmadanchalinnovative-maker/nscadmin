@@ -99,6 +99,7 @@ export default function CoursesListPage() {
           data={data}
           loading={loading}
           onEdit={(item) => router.push(`/admin/courses/${item.id}/edit`)}
+          onNext={(item) => router.push(`/admin/courses/${item.id}/lectures`)}
           onDelete={handleDelete}
           onToggleStatus={handleToggleStatus}
           onPageChange={setCurrentPage}

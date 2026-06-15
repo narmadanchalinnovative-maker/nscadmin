@@ -2,23 +2,25 @@
 
 import { useState } from 'react';
 import { BaseEntity, PaginatedResponse } from '@/types';
-import { ChevronLeft, ChevronRight, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit2, Trash2, ToggleLeft, ToggleRight, ArrowRight } from 'lucide-react';
 
-interface DataTableProps<T extends BaseEntity> {
+interface DataTableProps<T extends Record<string, any>> {
   data: PaginatedResponse<T & { id: string }>;
   onEdit: (item: T & { id: string }) => void;
   onDelete: (id: string) => void;
-  onToggleStatus: (id: string, currentStatus: 'active' | 'inactive') => void;
+  onToggleStatus?: (id: string, currentStatus: 'active' | 'inactive') => void;
   onPageChange: (page: number) => void;
+  onNext?: (item: T & { id: string }) => void;
   loading?: boolean;
 }
 
-export function DataTable<T extends BaseEntity>({
+export function DataTable<T extends Record<string, any>>({
   data,
   onEdit,
   onDelete,
   onToggleStatus,
   onPageChange,
+  onNext,
   loading = false,
 }: DataTableProps<T>) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -56,26 +58,33 @@ export function DataTable<T extends BaseEntity>({
         <tbody className="divide-y divide-gray-200">
           {data.data.map((item) => (
             <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.title}</td>
+              <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.title || (item as any).label}</td>
               <td className="px-6 py-4 text-sm text-gray-600 line-clamp-2">
-                {item.description}
+                {item.description || '-'}
               </td>
               <td className="px-6 py-4">
-                <button
-                  onClick={() => onToggleStatus(item.id!, item.status)}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    item.status === 'active'
-                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : 'bg-red-100 text-red-700 hover:bg-red-200'
-                  }`}
-                >
-                  {item.status === 'active' ? (
-                    <ToggleRight className="w-4 h-4" />
-                  ) : (
-                    <ToggleLeft className="w-4 h-4" />
-                  )}
-                  <span className="capitalize">{item.status}</span>
-                </button>
+                  <button
+                    onClick={() => {
+                      if (onToggleStatus) {
+                        onToggleStatus(item.id!, item.status);
+                      }
+                    }}
+                    disabled={!onToggleStatus}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      item.status === 'active'
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                        : !item.status 
+                          ? 'bg-gray-100 text-gray-700' 
+                          : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    } ${!onToggleStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {item.status === 'active' ? (
+                      <ToggleRight className="w-4 h-4" />
+                    ) : (
+                      <ToggleLeft className="w-4 h-4" />
+                    )}
+                    <span className="capitalize">{item.status || 'N/A'}</span>
+                  </button>
               </td>
               <td className="px-6 py-4 text-sm text-gray-600">{item.createdBy || '-'}</td>
               <td className="px-6 py-4 text-center">
@@ -87,6 +96,15 @@ export function DataTable<T extends BaseEntity>({
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
+                  {onNext && (
+                    <button
+                      onClick={() => onNext(item)}
+                      className="p-2 hover:bg-green-100 text-green-600 rounded transition-colors"
+                      title="Next / Questions"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
                   {confirmDelete === item.id ? (
                     <>
                       <button

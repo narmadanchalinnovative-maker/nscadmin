@@ -20,7 +20,7 @@ import {
 import { db } from './firebase';
 import { BaseEntity, PaginatedResponse } from '@/types';
 
-export async function createDocument<T extends BaseEntity>(
+export async function createDocument<T extends Record<string, any>>(
   collectionName: string,
   data: Omit<T, 'id'>,
   userId: string
@@ -46,7 +46,7 @@ export async function createDocument<T extends BaseEntity>(
   }
 }
 
-export async function getDocument<T extends BaseEntity>(
+export async function getDocument<T extends Record<string, any>>(
   collectionName: string,
   docId: string
 ): Promise<(T & { id: string }) | null> {
@@ -66,7 +66,7 @@ export async function getDocument<T extends BaseEntity>(
   }
 }
 
-export async function updateDocument<T extends BaseEntity>(
+export async function updateDocument<T extends Record<string, any>>(
   collectionName: string,
   docId: string,
   data: Partial<T>,
@@ -147,7 +147,7 @@ export async function toggleStatus(
   await updateDocument<BaseEntity>(collectionName, docId, { status: newStatus }, userId);
 }
 
-export async function listDocuments<T extends BaseEntity>(
+export async function listDocuments<T extends Record<string, any>>(
   collectionName: string,
   page: number = 1,
   limit: number = 10,
@@ -202,7 +202,7 @@ export async function listDocuments<T extends BaseEntity>(
   }
 }
 
-export async function searchDocuments<T extends BaseEntity>(
+export async function searchDocuments<T extends Record<string, any>>(
   collectionName: string,
   searchField: string,
   searchTerm: string,

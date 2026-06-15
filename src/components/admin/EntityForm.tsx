@@ -45,11 +45,11 @@ export function EntityForm({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-bold">{title}</h2>
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <button
             onClick={onCancel}
             disabled={isSubmitting || loading}
-            className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 text-gray-500 hover:text-gray-900"
           >
             <X className="w-5 h-5" />
           </button>
@@ -68,12 +68,12 @@ export function EntityForm({
                   {...register(field.name)}
                   placeholder={field.placeholder}
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-gray-900"
                 />
               ) : field.type === 'select' ? (
                 <select
                   {...register(field.name)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
                 >
                   <option value="">Select {field.label}</option>
                   {field.options?.map((opt) => (
@@ -87,7 +87,7 @@ export function EntityForm({
                   {...(field.type === 'number' ? register(field.name, { valueAsNumber: true }) : register(field.name))}
                   type={field.type || 'text'}
                   placeholder={field.placeholder}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
                 />
               )}
 

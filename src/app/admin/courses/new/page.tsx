@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { courseService } from '@/lib/services/courses';
+import { batchService } from '@/lib/services/batches';
 import { createCourseFormSchema } from '@/schemas';
 import { EntityForm } from '@/components/admin/EntityForm';
 import { toast } from 'sonner';
@@ -12,6 +13,29 @@ export default function CreateCoursePage() {
   const router = useRouter();
   const { adminUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [batchOptions, setBatchOptions] = useState<Array<{ label: string; value: string }>>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadBatches = async () => {
+      try {
+        const res = await batchService.list(1, 100);
+        if (!mounted) return;
+        setBatchOptions(
+          res.data.map((batch) => ({
+            label: batch.title || 'Untitled',
+            value: batch.id,
+          }))
+        );
+      } catch (err) {
+        console.error('Failed to load batches', err);
+      }
+    };
+    loadBatches();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSubmit = async (formData: any) => {
     if (!adminUser?.uid) {
@@ -49,11 +73,25 @@ export default function CreateCoursePage() {
             required: true,
           },
           {
+            name: 'batchId',
+            label: 'Batch',
+            type: 'select',
+            required: true,
+            options: batchOptions,
+          },
+          {
             name: 'description',
             label: 'Description',
             type: 'textarea',
             placeholder: 'Enter course description',
             required: true,
+          },
+          {
+            name: 'price',
+            label: 'Price (₹)',
+            type: 'number',
+            placeholder: 'Enter price (e.g. 12500)',
+            required: false,
           },
           {
             name: 'status',

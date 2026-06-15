@@ -83,6 +83,7 @@ export default function EditBatchPage() {
         defaultValues={{
           title: batch.title,
           description: batch.description,
+          price: batch.price ?? 0,
           status: batch.status,
         }}
         onSubmit={handleSubmit}
@@ -103,6 +104,13 @@ export default function EditBatchPage() {
             type: 'textarea',
             placeholder: 'Enter batch description',
             required: true,
+          },
+          {
+            name: 'price',
+            label: 'Price (₹)',
+            type: 'number',
+            placeholder: 'Enter price (e.g. 12500)',
+            required: false,
           },
           {
             name: 'status',

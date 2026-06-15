@@ -31,7 +31,8 @@ service cloud.firestore {
         request.resource.data.title.size() > 0 &&
         request.resource.data.title.size() <= 255 &&
         request.resource.data.description.size() > 0 &&
-        request.resource.data.description.size() <= 2000;
+        request.resource.data.description.size() <= 2000 &&
+        (!('price' in request.resource.data) || (request.resource.data.price is number && request.resource.data.price >= 0));
     }
 
     function isValidSection() {
@@ -370,7 +371,11 @@ service cloud.firestore {
       allow create, update: if (
         isValidEntity() &&
         hasValidAdminMetadata() &&
-        hasTimestamps()
+        hasTimestamps() &&
+        request.resource.data.keys().hasAny(['batchId']) &&
+        request.resource.data.batchId is string &&
+        request.resource.data.batchId.size() > 0 &&
+        exists(/databases/$(database)/documents/batches/$(request.resource.data.batchId))
       );
 
       allow delete: if true;

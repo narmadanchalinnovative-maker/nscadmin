@@ -14,6 +14,7 @@ export interface BaseEntity {
   id?: string;
   title: string;
   description: string;
+  price?: number;
   status: 'active' | 'inactive';
   createdAt?: Date;
   updatedAt?: Date;
@@ -40,6 +41,13 @@ export type Batch = BaseEntity;
 
 export interface Course extends BaseEntity {
   batchId: string;
+}
+
+export interface Lecture extends BaseEntity {
+  courseId: string;
+  videoUrl?: string;
+  videoPath?: string;
+  order?: number;
 }
 
 export interface Test extends BaseEntity {
@@ -90,4 +98,11 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface ExamGoal {
+  id?: string;
+  label: string;
+  order: number;
+  status?: 'active' | 'inactive';
 }
