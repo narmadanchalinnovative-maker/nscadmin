@@ -17,7 +17,8 @@ import {
   Timestamp,
   writeBatch,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from './firebase';
 import { BaseEntity, PaginatedResponse } from '@/types';
 
 export async function createDocument<T extends Record<string, any>>(
@@ -299,3 +300,29 @@ export async function findDocumentInCollectionGroup<T extends BaseEntity>(
 // modules that previously imported them from this file. Prefer using the
 // higher-level helpers above; these exports exist as a compatibility shim.
 export { collectionGroup, getDocs, query, where, documentId, limit, doc };
+
+export async function sendDoubtMessage(doubtId: string, text: string, mediaUrl?: string, mediaType?: 'image' | 'video', senderName: string = 'Admin'): Promise<void> {
+  const messagesRef = collection(db, 'doubts', doubtId, 'messages');
+  await addDoc(messagesRef, {
+    text,
+    mediaUrl: mediaUrl || null,
+    mediaType: mediaType || null,
+    senderId: 'admin',
+    senderName,
+    createdAt: Timestamp.now(),
+  });
+  
+  await updateDoc(doc(db, 'doubts', doubtId), {
+    hasUnreadAdmin: false
+  });
+}
+
+export async function uploadChatMedia(doubtId: string, file: File): Promise<string> {
+  if (!storage) throw new Error('Storage is not initialized');
+  const fileName = `${Date.now()}_${file.name}`;
+  const storageRef = ref(storage, `chat_media/${doubtId}/${fileName}`);
+  
+  const snapshot = await uploadBytes(storageRef, file);
+  const downloadUrl = await getDownloadURL(snapshot.ref);
+  return downloadUrl;
+}

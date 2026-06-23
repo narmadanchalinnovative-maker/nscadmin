@@ -17,6 +17,7 @@ import {
   Activity,
   UserCheck,
   Bell,
+  MessageCircleQuestion,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -32,6 +33,7 @@ const menuItems = [
   { label: 'Goal Logs', href: '/admin/goal-logs', icon: Activity },
   { label: 'Student Tracking', href: '/admin/student-tracking', icon: UserCheck },
   { label: 'Notifications', href: '/admin/notifications', icon: Bell },
+  { label: 'Doubts', href: '/admin/doubts', icon: MessageCircleQuestion },
 ];
 
 export function Sidebar() {
@@ -60,7 +62,7 @@ export function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white p-6 transform transition-transform lg:translate-x-0 z-40 ${
+        className={`fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white p-6 transform transition-transform lg:translate-x-0 z-40 overflow-y-auto flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
