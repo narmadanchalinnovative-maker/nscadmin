@@ -152,7 +152,7 @@ export async function listDocuments<T extends Record<string, any>>(
   page: number = 1,
   limit: number = 10,
   filters?: Record<string, unknown>,
-  sortBy: string = 'createdAt',
+  sortBy: string | null = 'createdAt',
   sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<PaginatedResponse<T & { id: string }>> {
   try {
@@ -167,8 +167,10 @@ export async function listDocuments<T extends Record<string, any>>(
       }
     }
 
-    // Add sorting
-    constraints.push(orderBy(sortBy, sortOrder));
+    // Add sorting if specified
+    if (sortBy) {
+      constraints.push(orderBy(sortBy, sortOrder));
+    }
 
     // Build pagination constraints
     const pageNum = Math.max(1, page);
@@ -181,7 +183,19 @@ export async function listDocuments<T extends Record<string, any>>(
     const total = totalDocs.size;
 
     // Get paginated results by slicing the fetched documents
-    const allDocs = totalDocs.docs;
+    let allDocs = totalDocs.docs;
+
+    // If we skipped Firestore ordering to avoid index requirements, sort in memory by createdAt
+    if (!sortBy) {
+      allDocs.sort((a, b) => {
+        const dataA = a.data();
+        const dataB = b.data();
+        const timeA = dataA.createdAt && typeof dataA.createdAt.toMillis === 'function' ? dataA.createdAt.toMillis() : 0;
+        const timeB = dataB.createdAt && typeof dataB.createdAt.toMillis === 'function' ? dataB.createdAt.toMillis() : 0;
+        return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+      });
+    }
+
     const data = allDocs
       .slice(skipCount, skipCount + pageSize)
       .map((d) => ({

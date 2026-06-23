@@ -30,14 +30,35 @@ export const eventSchema = baseEntitySchema.extend({
   thumbnail: z.string().url().optional(),
 });
 
-export const batchSchema = baseEntitySchema;
+export const batchSchema = baseEntitySchema.extend({
+  thumbnail: z.string().url().optional().or(z.literal('')),
+  language: z.string().optional(),
+  mode: z.string().optional(),
+  rating: z.string().optional(),
+  startDate: z.string().optional(),
+  duration: z.string().optional(),
+  instructor: z.string().optional(),
+  feature1Title: z.string().optional(),
+  feature1Desc: z.string().optional(),
+  feature2Title: z.string().optional(),
+  feature2Desc: z.string().optional(),
+  feature3Title: z.string().optional(),
+  feature3Desc: z.string().optional(),
+});
 
 export const courseSchema = baseEntitySchema.extend({
   batchId: z.string().min(1, 'Batch is required'),
 });
 
+export const subjectSchema = baseEntitySchema.extend({
+  courseId: z.string().min(1, 'Course is required'),
+  order: z.number().optional(),
+});
+
 export const lectureSchema = baseEntitySchema.extend({
   courseId: z.string().min(1, 'Course is required'),
+  subjectId: z.string().min(1, 'Subject is required'),
+  chapterId: z.string().min(1, 'Chapter is required'),
   videoUrl: z.string().url().optional().or(z.literal('')),
   videoPath: z.string().optional().or(z.literal('')),
   order: z.number().optional(),
@@ -93,6 +114,7 @@ export const createBatchFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
   price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
+  thumbnail: z.string().url('Invalid URL').optional().or(z.literal('')),
   status: statusSchema.default('active'),
 });
 
@@ -104,10 +126,30 @@ export const createCourseFormSchema = z.object({
   status: statusSchema.default('active'),
 });
 
+export const createSubjectFormSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  description: z.string().min(1, 'Description is required').max(2000),
+  courseId: z.string().optional(),
+  status: statusSchema.default('active'),
+});
+
+export const createChapterFormSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  description: z.string().min(1, 'Description is required').max(2000),
+  courseId: z.string().optional(),
+  subjectId: z.string().optional(),
+  status: statusSchema.default('active'),
+});
+
 export const createLectureFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
+  subjectId: z.string().optional(),
+  courseId: z.string().optional(),
+  chapterId: z.string().optional(),
   videoUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  videoUploadUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  thumbnailUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   status: statusSchema.default('active'),
 });
 
@@ -156,6 +198,7 @@ export type AdminUserSchema = z.infer<typeof adminUserSchema>;
 export type EventSchema = z.infer<typeof eventSchema>;
 export type BatchSchema = z.infer<typeof batchSchema>;
 export type CourseSchema = z.infer<typeof courseSchema>;
+export type SubjectSchema = z.infer<typeof subjectSchema>;
 export type LectureSchema = z.infer<typeof lectureSchema>;
 export type TestSchema = z.infer<typeof testSchema>;
 export type SectionSchema = z.infer<typeof sectionSchema>;
@@ -164,6 +207,8 @@ export type QuestionSchema = z.infer<typeof questionSchema>;
 export type CreateEventFormSchema = z.infer<typeof createEventFormSchema>;
 export type CreateBatchFormSchema = z.infer<typeof createBatchFormSchema>;
 export type CreateCourseFormSchema = z.infer<typeof createCourseFormSchema>;
+export type CreateSubjectFormSchema = z.infer<typeof createSubjectFormSchema>;
+export type CreateChapterFormSchema = z.infer<typeof createChapterFormSchema>;
 export type CreateLectureFormSchema = z.infer<typeof createLectureFormSchema>;
 export type CreateTestFormSchema = z.infer<typeof createTestFormSchema>;
 export type CreateLiveClassFormSchema = z.infer<typeof createLiveClassFormSchema>;

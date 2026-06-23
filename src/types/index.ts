@@ -37,15 +37,30 @@ export interface LiveClass extends BaseEntity {
   recordingUrl?: string;
 }
 
-export type Batch = BaseEntity;
+export interface Batch extends BaseEntity {
+  thumbnail?: string;
+}
 
 export interface Course extends BaseEntity {
   batchId: string;
 }
 
+export interface Subject extends BaseEntity {
+  courseId: string;
+  order?: number;
+}
+
+export interface Chapter extends BaseEntity {
+  courseId: string;
+  subjectId: string;
+  order?: number;
+}
+
 export interface Lecture extends BaseEntity {
   courseId: string;
-  videoUrl?: string;
+  subjectId: string;
+  chapterId: string;
+  videoUrl: string;
   videoPath?: string;
   order?: number;
 }

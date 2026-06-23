@@ -15,6 +15,8 @@ import {
   LogOut,
   Target,
   Activity,
+  UserCheck,
+  Bell,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -28,6 +30,8 @@ const menuItems = [
   { label: 'Live Classes', href: '/admin/live-classes', icon: Video },
   { label: 'Exam Goals', href: '/admin/exam-goals', icon: Target },
   { label: 'Goal Logs', href: '/admin/goal-logs', icon: Activity },
+  { label: 'Student Tracking', href: '/admin/student-tracking', icon: UserCheck },
+  { label: 'Notifications', href: '/admin/notifications', icon: Bell },
 ];
 
 export function Sidebar() {

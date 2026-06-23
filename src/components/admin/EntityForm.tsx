@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ZodType, any } from 'zod';
 import { BaseEntity } from '@/types';
 import { X, Loader2 } from 'lucide-react';
+import { ImageUpload } from './ImageUpload';
+import { VideoUpload } from './VideoUpload';
 
 interface EntityFormProps {
   schema: ZodType<any>;
@@ -15,10 +17,11 @@ interface EntityFormProps {
   fields: {
     name: string;
     label: string;
-    type?: 'text' | 'textarea' | 'select' | 'url' | 'number';
+    type?: 'text' | 'textarea' | 'select' | 'url' | 'number' | 'image' | 'video';
     placeholder?: string;
     required?: boolean;
     options?: Array<{ label: string; value: string }>;
+    storagePath?: string;
   }[];
   loading?: boolean;
 }
@@ -35,6 +38,8 @@ export function EntityForm({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema as any),
@@ -82,6 +87,18 @@ export function EntityForm({
                     </option>
                   ))}
                 </select>
+              ) : field.type === 'image' ? (
+                <ImageUpload
+                  value={watch(field.name)}
+                  onChange={(url) => setValue(field.name, url, { shouldValidate: true })}
+                  storagePath={field.storagePath}
+                />
+              ) : field.type === 'video' ? (
+                <VideoUpload
+                  value={watch(field.name)}
+                  onChange={(url) => setValue(field.name, url, { shouldValidate: true })}
+                  storagePath={field.storagePath}
+                />
               ) : (
                 <input
                   {...(field.type === 'number' ? register(field.name, { valueAsNumber: true }) : register(field.name))}

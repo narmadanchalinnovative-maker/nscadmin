@@ -14,6 +14,7 @@ export default function CreateCoursePage() {
   const { adminUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [batchOptions, setBatchOptions] = useState<Array<{ label: string; value: string }>>([]);
+  const [batches, setBatches] = useState<any[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -21,6 +22,7 @@ export default function CreateCoursePage() {
       try {
         const res = await batchService.list(1, 100);
         if (!mounted) return;
+        setBatches(res.data);
         setBatchOptions(
           res.data.map((batch) => ({
             label: batch.title || 'Untitled',
@@ -45,7 +47,15 @@ export default function CreateCoursePage() {
 
     try {
       setLoading(true);
-      await courseService.create(formData, adminUser.uid);
+      
+      // Auto-assign price from the selected batch
+      const selectedBatch = batches.find(b => b.id === formData.batchId);
+      const finalData = { 
+        ...formData, 
+        price: selectedBatch?.price || 0 
+      };
+
+      await courseService.create(finalData, adminUser.uid);
       toast.success('Course created successfully');
       router.push('/admin/courses');
     } catch (error) {
@@ -85,13 +95,6 @@ export default function CreateCoursePage() {
             type: 'textarea',
             placeholder: 'Enter course description',
             required: true,
-          },
-          {
-            name: 'price',
-            label: 'Price (₹)',
-            type: 'number',
-            placeholder: 'Enter price (e.g. 12500)',
-            required: false,
           },
           {
             name: 'status',

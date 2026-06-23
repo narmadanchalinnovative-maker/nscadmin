@@ -23,6 +23,16 @@ service firebase.storage {
       );
     }
 
+    match /courses/{courseId}/subjects/{subjectId}/chapters/{chapterId}/lectures/{rest=**} {
+      allow read: if true;
+      allow write: if (
+        request.resource.size < 1024 * 1024 * 1024 && // 1GB limit for videos
+        (request.resource.contentType.matches('image/.*') ||
+         request.resource.contentType.matches('video/.*') ||
+         request.resource.contentType.matches('application/.*'))
+      );
+    }
+
     // Fallback: deny writes to other paths
     match /{rest=**} {
       allow read: if true;

@@ -43,13 +43,13 @@ export const lectureService = {
     );
   },
 
-  async listByCourse(courseId: string, page = 1, limit = 100) {
+  async listByChapter(chapterId: string, page = 1, limit = 100) {
     return listDocuments<Lecture>(
       COLLECTION_NAME,
       page,
       limit,
-      { courseId },
-      'createdAt',
+      { chapterId },
+      null, // Bypass firestore index
       'asc'
     );
   },

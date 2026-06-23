@@ -19,18 +19,20 @@ export default function EditCoursePage() {
   const [batchOptions, setBatchOptions] = useState<Array<{ label: string; value: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [batches, setBatches] = useState<any[]>([]);
 
   const courseId = params.id as string;
 
   useEffect(() => {
     async function fetchCourse() {
       try {
-        const [data, batches] = await Promise.all([
+        const [data, fetchedBatches] = await Promise.all([
           courseService.get(courseId),
           batchService.list(1, 100),
         ]);
+        setBatches(fetchedBatches.data);
         setBatchOptions(
-          batches.data.map((batch) => ({
+          fetchedBatches.data.map((batch) => ({
             label: batch.title || 'Untitled',
             value: batch.id,
           }))
@@ -53,7 +55,7 @@ export default function EditCoursePage() {
     fetchCourse();
   }, [courseId, router]);
 
-  const handleSubmit = async (formData: CreateCourseFormSchema) => {
+  const handleSubmit = async (formData: any) => {
     if (!adminUser?.uid || !course) {
       toast.error('User not authenticated');
       return;
@@ -61,7 +63,15 @@ export default function EditCoursePage() {
 
     try {
       setSubmitting(true);
-      await courseService.update(course.id, formData, adminUser.uid);
+
+      // Auto-assign price from the selected batch
+      const selectedBatch = batches.find(b => b.id === formData.batchId);
+      const finalData = { 
+        ...formData, 
+        price: selectedBatch?.price || 0 
+      };
+
+      await courseService.update(course.id, finalData, adminUser.uid);
       toast.success('Course updated successfully');
       router.push('/admin/courses');
     } catch (error) {
@@ -95,7 +105,6 @@ export default function EditCoursePage() {
           title: course.title,
           batchId: course.batchId,
           description: course.description,
-          price: course.price ?? 0,
           status: course.status,
         }}
         onSubmit={handleSubmit}
@@ -123,13 +132,6 @@ export default function EditCoursePage() {
             type: 'textarea',
             placeholder: 'Enter course description',
             required: true,
-          },
-          {
-            name: 'price',
-            label: 'Price (₹)',
-            type: 'number',
-            placeholder: 'Enter price (e.g. 12500)',
-            required: false,
           },
           {
             name: 'status',
