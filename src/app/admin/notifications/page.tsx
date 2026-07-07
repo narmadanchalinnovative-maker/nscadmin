@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Send, Loader2, AlertCircle, CheckCircle2, Image as ImageIcon } from 'lucide-react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase'; // ensure we import from your firebase setup
+import { ImageUpload } from '@/components/admin/ImageUpload';
 
 export default function NotificationsPage() {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; msg: String }>({ type: null, msg: '' });
 
@@ -22,12 +24,13 @@ export default function NotificationsPage() {
       const functions = getFunctions();
       const sendGlobalNotification = httpsCallable(functions, 'sendGlobalNotification');
       
-      const result = await sendGlobalNotification({ title, message });
+      const result = await sendGlobalNotification({ title, message, imageUrl });
       console.log('Function result:', result);
 
       setStatus({ type: 'success', msg: 'Notification sent successfully to all users!' });
       setTitle('');
       setMessage('');
+      setImageUrl('');
     } catch (error: any) {
       console.error('Error sending notification:', error);
       setStatus({ type: 'error', msg: error.message || 'Failed to send notification.' });
@@ -85,6 +88,17 @@ export default function NotificationsPage() {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="e.g., Thermodynamics starts in 30 mins. Join now!"
               className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Notification Image (Optional)
+            </label>
+            <ImageUpload 
+              value={imageUrl}
+              onChange={setImageUrl}
+              storagePath="notifications"
             />
           </div>
 

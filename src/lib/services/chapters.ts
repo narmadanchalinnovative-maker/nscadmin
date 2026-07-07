@@ -26,7 +26,7 @@ export const chapterService = {
     return getDocument<Chapter>(COLLECTION_NAME, id);
   },
 
-  async create(data: Partial<Chapter>, adminUid: string) {
+  async create(data: Omit<Chapter, 'id'>, adminUid: string) {
     return createDocument<Chapter>(COLLECTION_NAME, data, adminUid);
   },
 

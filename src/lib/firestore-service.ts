@@ -105,11 +105,15 @@ export async function deleteDocument(
   }
 }
 
-export async function setBatchChildDocument<T extends BaseEntity & { batchId: string }>(
+export async function setBatchChildDocument<T extends BaseEntity & { batchId?: string }>(
   collectionName: 'courses' | 'tests',
   docId: string,
   data: T & { id?: string }
 ): Promise<void> {
+  if (!data.batchId) {
+    console.warn(`No batchId found for ${collectionName} ${docId}. Skipping batch child sync.`);
+    return;
+  }
   try {
     await setDoc(
       doc(db, 'batches', data.batchId, collectionName, docId),

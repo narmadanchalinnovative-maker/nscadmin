@@ -57,4 +57,15 @@ export const lectureService = {
   async search(searchTerm: string, page = 1, limit = 10) {
     return searchDocuments<Lecture>(COLLECTION_NAME, 'title', searchTerm, page, limit);
   },
+
+  async listByCourse(courseId: string, page = 1, limit = 100) {
+    return listDocuments<Lecture>(
+      COLLECTION_NAME,
+      page,
+      limit,
+      { courseId },
+      null, // Bypass firestore index
+      'asc'
+    );
+  },
 };

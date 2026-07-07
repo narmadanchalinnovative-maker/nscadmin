@@ -57,6 +57,7 @@ export default function CreateCoursePage() {
 
       await courseService.create(finalData, adminUser.uid);
       toast.success('Course created successfully');
+      router.refresh();
       router.push('/admin/courses');
     } catch (error) {
       console.error('Error creating course:', error);

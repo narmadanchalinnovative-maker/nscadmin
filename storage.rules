@@ -23,6 +23,23 @@ service firebase.storage {
       );
     }
 
+    match /uploads/{rest=**} {
+      allow read: if true;
+      allow write: if (
+        request.resource.size < 100 * 1024 * 1024 &&
+        (request.resource.contentType.matches('image/.*') ||
+         request.resource.contentType.matches('application/pdf'))
+      );
+    }
+
+    match /notifications/{fileName} {
+      allow read: if true;
+      allow write: if (
+        request.resource.size < 100 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*')
+      );
+    }
+
     match /courses/{courseId}/subjects/{subjectId}/chapters/{chapterId}/lectures/{rest=**} {
       allow read: if true;
       allow write: if (

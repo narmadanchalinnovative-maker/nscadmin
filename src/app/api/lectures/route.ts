@@ -4,7 +4,7 @@ import { lectureService } from '@/lib/services/lectures';
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const { courseId, title, description, videoUrl, videoPath, order, userId } = data;
+    const { courseId, subjectId, chapterId, title, description, videoUrl, videoPath, order, userId } = data;
 
     if (!courseId || !title) {
       return NextResponse.json(
@@ -15,6 +15,8 @@ export async function POST(request: Request) {
 
     const newLecture = {
       courseId,
+      subjectId: subjectId || '',
+      chapterId: chapterId || '',
       title,
       description: description || '',
       videoUrl: videoUrl || '',

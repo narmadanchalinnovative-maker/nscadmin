@@ -73,6 +73,7 @@ export default function EditCoursePage() {
 
       await courseService.update(course.id, finalData, adminUser.uid);
       toast.success('Course updated successfully');
+      router.refresh();
       router.push('/admin/courses');
     } catch (error) {
       console.error('Error updating course:', error);

@@ -46,10 +46,11 @@ export default function NewChapterPage() {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow">
-        <EntityForm<CreateChapterFormSchema>
+        <EntityForm
           schema={createChapterFormSchema}
           onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
+          loading={isSubmitting}
+          title="Create Chapter"
           onCancel={() => router.push(`/admin/courses/${courseId}/subjects/${subjectId}/chapters`)}
           fields={[
             {
