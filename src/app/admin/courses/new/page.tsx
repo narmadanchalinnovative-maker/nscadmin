@@ -48,11 +48,9 @@ export default function CreateCoursePage() {
     try {
       setLoading(true);
       
-      // Auto-assign price from the selected batch
-      const selectedBatch = batches.find(b => b.id === formData.batchId);
+      // Remove auto-assign price from the selected batch since course has its own price
       const finalData = { 
-        ...formData, 
-        price: selectedBatch?.price || 0 
+        ...formData
       };
 
       await courseService.create(finalData, adminUser.uid);
@@ -96,6 +94,13 @@ export default function CreateCoursePage() {
             type: 'textarea',
             placeholder: 'Enter course description',
             required: true,
+          },
+          {
+            name: 'price',
+            label: 'Price (₹)',
+            type: 'number',
+            placeholder: 'Enter price (e.g. 12500)',
+            required: false,
           },
           {
             name: 'status',

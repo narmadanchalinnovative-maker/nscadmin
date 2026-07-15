@@ -195,7 +195,7 @@ service cloud.firestore {
     
     match /app_config/{document=**} {
       allow read: if true;
-      allow write: if false;
+      allow write: if hasValidAdminMetadata();
     }
 
     match /app_pages/{document=**} {
@@ -218,6 +218,14 @@ service cloud.firestore {
     match /doubts/{document=**} {
       allow read: if true;
       allow write: if true; // Allow users to create doubts and admin to manage
+    }
+
+    // =========================================================================
+    // SUPPORT TICKETS
+    // =========================================================================
+    match /support_tickets/{document=**} {
+      allow read: if true;
+      allow write: if true; // Allow users to create tickets and admin to manage
     }
 
     // =========================================================================
@@ -273,6 +281,18 @@ service cloud.firestore {
           (request.resource.data.name is string && 
            request.resource.data.name.size() <= 255));
         
+      allow delete: if true;
+    }
+
+    // =========================================================================
+    // BANNERS COLLECTION (ADMIN PANEL)
+    // =========================================================================
+    match /banners/{docId} {
+      allow read: if true;
+      allow create, update: if (
+        hasValidAdminMetadata() &&
+        hasTimestamps()
+      );
       allow delete: if true;
     }
 
@@ -463,7 +483,10 @@ service cloud.firestore {
     match /live_classes/{docId} {
       allow read: if true;
 
-      allow create, update: if isValidLiveClass();
+      allow create, update: if (
+        hasValidAdminMetadata() &&
+        hasTimestamps()
+      );
 
       allow delete: if true;
 

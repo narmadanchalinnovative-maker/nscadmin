@@ -113,7 +113,6 @@ export const createEventFormSchema = z.object({
 export const createBatchFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
-  price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
   thumbnail: z.string().url('Invalid URL').optional().or(z.literal('')),
   status: statusSchema.default('active'),
 });

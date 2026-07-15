@@ -330,3 +330,30 @@ export async function uploadChatMedia(doubtId: string, file: File): Promise<stri
   const downloadUrl = await getDownloadURL(snapshot.ref);
   return downloadUrl;
 }
+
+export async function sendSupportTicketMessage(ticketId: string, text: string, mediaUrl?: string, mediaType?: 'image' | 'video', senderName: string = 'Admin'): Promise<void> {
+  const messagesRef = collection(db, 'support_tickets', ticketId, 'messages');
+  await addDoc(messagesRef, {
+    text,
+    mediaUrl: mediaUrl || null,
+    mediaType: mediaType || null,
+    senderId: 'admin',
+    senderName,
+    createdAt: Timestamp.now(),
+  });
+  
+  await updateDoc(doc(db, 'support_tickets', ticketId), {
+    hasUnreadAdmin: false,
+    updatedAt: Timestamp.now()
+  });
+}
+
+export async function uploadSupportChatMedia(ticketId: string, file: File): Promise<string> {
+  if (!storage) throw new Error('Storage is not initialized');
+  const fileName = `${Date.now()}_${file.name}`;
+  const storageRef = ref(storage, `support_chat_media/${ticketId}/${fileName}`);
+  
+  const snapshot = await uploadBytes(storageRef, file);
+  const downloadUrl = await getDownloadURL(snapshot.ref);
+  return downloadUrl;
+}

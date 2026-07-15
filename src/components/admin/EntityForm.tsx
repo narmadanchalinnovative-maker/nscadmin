@@ -17,7 +17,7 @@ interface EntityFormProps {
   fields: {
     name: string;
     label: string;
-    type?: 'text' | 'textarea' | 'select' | 'url' | 'number' | 'image' | 'video';
+    type?: 'text' | 'textarea' | 'select' | 'url' | 'number' | 'image' | 'video' | 'datetime-local';
     placeholder?: string;
     required?: boolean;
     options?: Array<{ label: string; value: string }>;

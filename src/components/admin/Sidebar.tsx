@@ -18,6 +18,11 @@ import {
   UserCheck,
   Bell,
   MessageCircleQuestion,
+  Image as ImageIcon,
+  Settings,
+  FileText,
+  Headset,
+  Ticket,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -26,6 +31,7 @@ const menuItems = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: BarChart3 },
   { label: 'Events', href: '/admin/events', icon: Calendar },
   { label: 'Batches', href: '/admin/batches', icon: Users },
+  { label: 'Batch Notes', href: '/admin/notes', icon: FileText },
   { label: 'Courses', href: '/admin/courses', icon: BookOpen },
   { label: 'Tests', href: '/admin/tests', icon: CheckSquare },
   { label: 'Live Classes', href: '/admin/live-classes', icon: Video },
@@ -34,6 +40,10 @@ const menuItems = [
   { label: 'Student Tracking', href: '/admin/student-tracking', icon: UserCheck },
   { label: 'Notifications', href: '/admin/notifications', icon: Bell },
   { label: 'Doubts', href: '/admin/doubts', icon: MessageCircleQuestion },
+  { label: 'Banners', href: '/admin/banners', icon: ImageIcon },
+  { label: 'Settings', href: '/admin/settings', icon: Settings },
+  { label: 'Support Info', href: '/admin/support', icon: Headset },
+  { label: 'Support Tickets', href: '/admin/support-tickets', icon: Ticket },
 ];
 
 export function Sidebar() {

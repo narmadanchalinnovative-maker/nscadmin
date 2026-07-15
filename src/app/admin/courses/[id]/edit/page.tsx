@@ -64,11 +64,9 @@ export default function EditCoursePage() {
     try {
       setSubmitting(true);
 
-      // Auto-assign price from the selected batch
-      const selectedBatch = batches.find(b => b.id === formData.batchId);
+      // Remove auto-assign price since course has its own price
       const finalData = { 
-        ...formData, 
-        price: selectedBatch?.price || 0 
+        ...formData
       };
 
       await courseService.update(course.id, finalData, adminUser.uid);
@@ -106,6 +104,7 @@ export default function EditCoursePage() {
           title: course.title,
           batchId: course.batchId,
           description: course.description,
+          price: course.price ?? 0,
           status: course.status,
         }}
         onSubmit={handleSubmit}
@@ -133,6 +132,13 @@ export default function EditCoursePage() {
             type: 'textarea',
             placeholder: 'Enter course description',
             required: true,
+          },
+          {
+            name: 'price',
+            label: 'Price (₹)',
+            type: 'number',
+            placeholder: 'Enter price (e.g. 12500)',
+            required: false,
           },
           {
             name: 'status',

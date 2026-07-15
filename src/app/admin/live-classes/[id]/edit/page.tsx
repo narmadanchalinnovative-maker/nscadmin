@@ -1,208 +1,192 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { liveClassService } from '@/lib/services/liveClasses';
-import { LiveClass, PaginatedResponse } from '@/types';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
-import { joinZoom } from '@/lib/zoom';
+import { courseService } from '@/lib/services/courses';
+import { batchService } from '@/lib/services/batches';
+import { LiveClass, Course, Batch } from '@/types';
+import { createLiveClassFormSchema } from '@/schemas';
+import { EntityForm } from '@/components/admin/EntityForm';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function LiveClassesListPage() {
+function extractZoomDetails(url: string) {
+  if (!url || typeof url !== 'string') return { zoomMeetingId: '', zoomPassword: '' };
+  let meetingIdMatch = url.match(/(?:\/j\/|\/w\/|\/wc\/|\/meeting\/register\/|\/join\?confno=)(\d+)/i);
+  let meetingId = meetingIdMatch ? meetingIdMatch[1] : '';
+  let pwdMatch = url.match(/[?&]pwd=([^&#]+)/i);
+  let password = pwdMatch ? pwdMatch[1] : '';
+  if (!meetingId && /^\d+$/.test(url.trim())) {
+    meetingId = url.trim();
+  }
+  return { zoomMeetingId: meetingId, zoomPassword: password };
+}
+
+export default function EditLiveClassPage() {
   const router = useRouter();
+  const params = useParams();
   const { adminUser } = useAuth();
-  const [data, setData] = useState<PaginatedResponse<LiveClass & { id: string }> | null>(null);
+  
+  const [liveClass, setLiveClass] = useState<LiveClass & { id: string } | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+
+  const liveClassId = params.id as string;
 
   useEffect(() => {
-    fetchLiveClasses();
-  }, [currentPage, searchTerm]);
+    async function fetchData() {
+      try {
+        const [liveClassRes, coursesRes, batchesRes] = await Promise.allSettled([
+          liveClassService.get(liveClassId),
+          courseService.list(1, 100),
+          batchService.list(1, 100),
+        ]);
 
-  async function fetchLiveClasses() {
-    try {
-      setLoading(true);
-      let result;
-      if (searchTerm) {
-        result = await liveClassService.search(searchTerm, currentPage);
-      } else {
-        result = await liveClassService.list(currentPage);
+        if (liveClassRes.status === 'fulfilled') {
+          if (!liveClassRes.value) {
+            toast.error('Live class not found');
+            router.push('/admin/live-classes');
+            return;
+          }
+          setLiveClass(liveClassRes.value);
+        } else {
+          console.error('Failed to fetch live class:', liveClassRes.reason);
+          toast.error('Failed to load live class');
+        }
+
+        if (coursesRes.status === 'fulfilled') {
+          setCourses(coursesRes.value.data || []);
+        } else {
+          console.error('Failed to fetch courses:', coursesRes.reason);
+          toast.error('Failed to load courses');
+        }
+
+        if (batchesRes.status === 'fulfilled') {
+          setBatches(batchesRes.value.data || []);
+        } else {
+          console.error('Failed to fetch batches:', batchesRes.reason);
+          toast.error('Failed to load batches');
+        }
+      } catch (error) {
+        console.error('Unexpected error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
-      setData(result);
-    } catch (error) {
-      console.error('Error fetching live classes:', error);
-      toast.error('Failed to fetch live classes');
-    } finally {
-      setLoading(false);
     }
+    fetchData();
+  }, [liveClassId, router]);
+
+  const handleSubmit = async (formData: any) => {
+    if (!adminUser?.uid || !liveClass) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const { zoomMeetingId, zoomPassword } = extractZoomDetails(formData.meetingUrl || '');
+      
+      await liveClassService.update(
+        liveClass.id,
+        {
+          title: formData.title,
+          description: formData.description,
+          startTime: formData.startTime ? new Date(formData.startTime) : undefined,
+          duration: formData.duration || undefined,
+          meetingUrl: formData.meetingUrl || '',
+          zoomMeetingId,
+          zoomPassword,
+          instructor: formData.instructor || '',
+          courseId: formData.courseId || '',
+          batchId: formData.batchId || '',
+          status: formData.status,
+        },
+        adminUser.uid
+      );
+      toast.success('Live class updated successfully');
+      router.refresh();
+      router.push('/admin/live-classes');
+    } catch (error) {
+      console.error('Error updating live class:', error);
+      toast.error('Failed to update live class');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+          <p className="text-gray-600">Loading live class...</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleDelete = async (id: string) => {
-    try {
-      await liveClassService.delete(id);
-      toast.success('Live class deleted');
-      fetchLiveClasses();
-    } catch (error) {
-      console.error('Error deleting live class:', error);
-      toast.error('Failed to delete live class');
-    }
-  };
-
-  const handleStart = async (id: string) => {
-    if (!adminUser?.uid) return toast.error('User not authenticated');
-    const meetingUrl = window.prompt('Meeting URL (optional)') || '';
-    try {
-      await liveClassService.start(id, adminUser.uid, meetingUrl);
-      toast.success('Live class started');
-      fetchLiveClasses();
-    } catch (error) {
-      console.error('Error starting live class:', error);
-      toast.error('Failed to start live class');
-    }
-  };
-
-  const handleStop = async (id: string) => {
-    if (!adminUser?.uid) return toast.error('User not authenticated');
-    const recordingUrl = window.prompt('Recording URL (optional)') || '';
-    try {
-      await liveClassService.stop(id, adminUser.uid, recordingUrl);
-      toast.success('Live class stopped');
-      fetchLiveClasses();
-    } catch (error) {
-      console.error('Error stopping live class:', error);
-      toast.error('Failed to stop live class');
-    }
-  };
+  if (!liveClass) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Live Classes</h1>
-          <p className="text-gray-600 mt-1">Manage and start live classes</p>
-        </div>
-        <button
-          onClick={() => router.push('/admin/live-classes/new')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Create Live Class</span>
-        </button>
-      </div>
-
-      <div className="flex gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search live classes..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-          />
-        </div>
-      </div>
-
-      <div>
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin">
-              <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full"></div>
-            </div>
-          </div>
-        ) : data && data.data.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-gray-200">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Title</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Live</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Created By</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {data.data.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.title}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600 line-clamp-2">
-                      {item.description}
-                    </td>
-                    <td className="px-6 py-4">{item.status}</td>
-                    <td className="px-6 py-4">{item.isLive ? 'Yes' : 'No'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.createdBy || '-'}</td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => router.push(`/admin/live-classes/${item.id}/edit`)}
-                          className="p-2 hover:bg-blue-100 text-blue-600 rounded transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => (item.isLive ? handleStop(item.id) : handleStart(item.id))}
-                          className={`px-3 py-1 rounded text-sm font-medium ${{ true: 'bg-red-600 text-white', false: 'bg-green-600 text-white' }[String(item.isLive)]}`}
-                        >
-                          {item.isLive ? 'Stop' : 'Start'}
-                        </button>
-                        {item.meetingUrl ? (
-                          <button
-                            onClick={() => joinZoom(item.meetingUrl!)}
-                            className="px-3 py-1 rounded bg-indigo-600 text-white text-sm font-medium"
-                          >
-                            Join
-                          </button>
-                        ) : null}
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="p-2 hover:bg-red-100 text-red-600 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                Page {data.page} of {data.totalPages} ({data.total} total items)
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(data.page - 1)}
-                  disabled={data.page === 1}
-                  className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Prev
-                </button>
-                <button
-                  onClick={() => setCurrentPage(data.page + 1)}
-                  disabled={data.page === data.totalPages}
-                  className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <p className="text-gray-600">No live classes found</p>
-          </div>
-        )}
-      </div>
+    <div>
+      <EntityForm
+        schema={createLiveClassFormSchema}
+        defaultValues={{
+          title: liveClass.title,
+          description: liveClass.description,
+          startTime: liveClass.startTime 
+            ? (typeof (liveClass.startTime as any).toDate === 'function' 
+                ? (liveClass.startTime as any).toDate().toISOString().slice(0, 16) 
+                : new Date(liveClass.startTime as any).toISOString().slice(0, 16))
+            : '',
+          duration: liveClass.duration || '',
+          meetingUrl: liveClass.meetingUrl || '',
+          instructor: liveClass.instructor || '',
+          courseId: liveClass.courseId || '',
+          batchId: liveClass.batchId || '',
+          status: liveClass.status,
+        }}
+        onSubmit={handleSubmit}
+        onCancel={() => router.back()}
+        title="Edit Live Class"
+        loading={submitting}
+        fields={[
+          { name: 'title', label: 'Title', type: 'text', required: true },
+          { name: 'description', label: 'Description', type: 'textarea', required: true },
+          { name: 'startTime', label: 'Start Time', type: 'datetime-local', required: false },
+          { name: 'duration', label: 'Duration (minutes)', type: 'number', required: false },
+          { name: 'meetingUrl', label: 'Meeting URL', type: 'url', required: false },
+          { name: 'instructor', label: 'Instructor', type: 'text', required: false },
+          { 
+            name: 'courseId', 
+            label: 'Course', 
+            type: 'select', 
+            required: false,
+            options: courses?.map(c => ({ label: c.title || 'Untitled', value: c.id! })) || []
+          },
+          { 
+            name: 'batchId', 
+            label: 'Batch', 
+            type: 'select', 
+            required: false,
+            options: batches?.map(b => ({ label: b.title || 'Untitled', value: b.id! })) || []
+          },
+          {
+            name: 'status',
+            label: 'Status',
+            type: 'select',
+            required: true,
+            options: [
+              { label: 'Active', value: 'active' },
+              { label: 'Inactive', value: 'inactive' },
+            ],
+          },
+        ]}
+      />
     </div>
   );
 }

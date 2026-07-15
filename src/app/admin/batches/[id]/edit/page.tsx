@@ -9,6 +9,7 @@ import { createBatchFormSchema } from '@/schemas';
 import { EntityForm } from '@/components/admin/EntityForm';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { BatchNotesManager } from '@/components/admin/BatchNotesManager';
 
 export default function EditBatchPage() {
   const router = useRouter();
@@ -83,7 +84,6 @@ export default function EditBatchPage() {
         defaultValues={{
           title: batch.title,
           description: batch.description,
-          price: batch.price ?? 0,
           thumbnail: batch.thumbnail ?? '',
           status: batch.status,
         }}
@@ -105,13 +105,6 @@ export default function EditBatchPage() {
             type: 'textarea',
             placeholder: 'Enter batch description',
             required: true,
-          },
-          {
-            name: 'price',
-            label: 'Price (₹)',
-            type: 'number',
-            placeholder: 'Enter price (e.g. 12500)',
-            required: false,
           },
           {
             name: 'thumbnail',
@@ -203,6 +196,11 @@ export default function EditBatchPage() {
           },
         ]}
       />
+      
+      {/* Dynamic Notes Manager Section */}
+      <div className="mt-8">
+        <BatchNotesManager batchId={batch.id} />
+      </div>
     </div>
   );
 }
