@@ -114,6 +114,8 @@ export const createBatchFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
   thumbnail: z.string().url('Invalid URL').optional().or(z.literal('')),
+  examGoalId: z.string().min(1, 'Exam Goal is required'),
+  examGoalLabel: z.string().optional(),
   status: statusSchema.default('active'),
 });
 

@@ -7,11 +7,22 @@ import { batchService } from '@/lib/services/batches';
 import { createBatchFormSchema } from '@/schemas';
 import { EntityForm } from '@/components/admin/EntityForm';
 import { toast } from 'sonner';
+import { examGoalService } from '@/lib/services/examGoals';
+import { ExamGoal } from '@/types';
 
 export default function CreateBatchPage() {
   const router = useRouter();
   const { adminUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [examGoals, setExamGoals] = useState<(ExamGoal & { id: string })[]>([]);
+
+  useEffect(() => {
+    async function loadExamGoals() {
+      const goals = await examGoalService.listAll();
+      setExamGoals(goals);
+    }
+    loadExamGoals();
+  }, []);
 
   const handleSubmit = async (formData: any) => {
     if (!adminUser?.uid) {
@@ -21,7 +32,14 @@ export default function CreateBatchPage() {
 
     try {
       setLoading(true);
-      await batchService.create(formData, adminUser.uid);
+      
+      const selectedGoal = examGoals.find(g => g.id === formData.examGoalId);
+      const dataToSave = {
+        ...formData,
+        examGoalLabel: selectedGoal ? selectedGoal.label : '',
+      };
+
+      await batchService.create(dataToSave, adminUser.uid);
       toast.success('Batch created successfully');
       router.push('/admin/batches');
     } catch (error) {
@@ -47,6 +65,16 @@ export default function CreateBatchPage() {
             type: 'text',
             placeholder: 'Enter batch title',
             required: true,
+          },
+          {
+            name: 'examGoalId',
+            label: 'Exam Goal',
+            type: 'select',
+            required: true,
+            options: examGoals.map(goal => ({
+              label: goal.label,
+              value: goal.id,
+            })),
           },
           {
             name: 'description',

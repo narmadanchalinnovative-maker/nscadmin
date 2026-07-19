@@ -41,4 +41,26 @@ export const examGoalService = {
       'asc'
     );
   },
+
+  async listAll() {
+    try {
+      const db = (await import('../firebase')).db;
+      const collectionRef = (await import('firebase/firestore')).collection(db, COLLECTION_NAME);
+      const q = (await import('firebase/firestore')).query(
+        collectionRef
+      );
+      const snapshot = await (await import('firebase/firestore')).getDocs(q);
+      const docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as (ExamGoal & { id: string })[];
+      
+      return docs
+        .filter(doc => doc.status !== 'inactive')
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+    } catch (error) {
+      console.error('Error fetching all exam goals:', error);
+      return [];
+    }
+  },
 };

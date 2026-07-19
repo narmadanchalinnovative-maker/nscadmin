@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { batchService } from '@/lib/services/batches';
-import { Batch } from '@/types';
+import { examGoalService } from '@/lib/services/examGoals';
+import { Batch, ExamGoal } from '@/types';
 import { createBatchFormSchema } from '@/schemas';
 import { EntityForm } from '@/components/admin/EntityForm';
 import { Loader2 } from 'lucide-react';
@@ -16,15 +17,21 @@ export default function EditBatchPage() {
   const params = useParams();
   const { adminUser } = useAuth();
   const [batch, setBatch] = useState<Batch & { id: string } | null>(null);
+  const [examGoals, setExamGoals] = useState<(ExamGoal & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const batchId = params.id as string;
 
   useEffect(() => {
-    async function fetchBatch() {
+    async function fetchData() {
       try {
-        const data = await batchService.get(batchId);
+        const [data, goals] = await Promise.all([
+          batchService.get(batchId),
+          examGoalService.listAll()
+        ]);
+        
+        setExamGoals(goals);
         if (data) {
           setBatch(data);
         } else {
@@ -40,7 +47,7 @@ export default function EditBatchPage() {
       }
     }
 
-    fetchBatch();
+    fetchData();
   }, [batchId, router]);
 
   const handleSubmit = async (formData: any) => {
@@ -51,7 +58,14 @@ export default function EditBatchPage() {
 
     try {
       setSubmitting(true);
-      await batchService.update(batch.id, formData, adminUser.uid);
+      
+      const selectedGoal = examGoals.find(g => g.id === formData.examGoalId);
+      const dataToSave = {
+        ...formData,
+        examGoalLabel: selectedGoal ? selectedGoal.label : '',
+      };
+
+      await batchService.update(batch.id, dataToSave, adminUser.uid);
       toast.success('Batch updated successfully');
       router.push('/admin/batches');
     } catch (error) {
@@ -85,6 +99,7 @@ export default function EditBatchPage() {
           title: batch.title,
           description: batch.description,
           thumbnail: batch.thumbnail ?? '',
+          examGoalId: batch.examGoalId ?? '',
           status: batch.status,
         }}
         onSubmit={handleSubmit}
@@ -98,6 +113,16 @@ export default function EditBatchPage() {
             type: 'text',
             placeholder: 'Enter batch title',
             required: true,
+          },
+          {
+            name: 'examGoalId',
+            label: 'Exam Goal',
+            type: 'select',
+            required: true,
+            options: examGoals.map(goal => ({
+              label: goal.label,
+              value: goal.id,
+            })),
           },
           {
             name: 'description',

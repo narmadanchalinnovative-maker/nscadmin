@@ -560,6 +560,37 @@ service cloud.firestore {
     }
 
     // =========================================================================
+    // EXAM GOALS & LOGS
+    // =========================================================================
+    match /exam_goals/{docId} {
+      allow read: if true;
+      allow create, update: if (
+        hasValidAdminMetadata() &&
+        hasTimestamps()
+      );
+      allow delete: if true;
+    }
+
+    match /goal_change_logs/{docId} {
+      allow read: if true;
+      allow create: if true; // Allow users to create logs
+      allow update, delete: if true;
+    }
+
+    // =========================================================================
+    // BATCHES & BATCH NOTES
+    // =========================================================================
+    match /batches/{batchId} {
+      allow read: if true;
+      allow write: if true;
+      
+      match /notes/{noteId} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+
+    // =========================================================================
     // FALLBACK RULE (DENY EVERYTHING ELSE BY DEFAULT)
     // =========================================================================
     match /{document=**} {

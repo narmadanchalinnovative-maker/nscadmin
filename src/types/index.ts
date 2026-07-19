@@ -39,6 +39,8 @@ export interface LiveClass extends BaseEntity {
 
 export interface Batch extends BaseEntity {
   thumbnail?: string;
+  examGoalId?: string;
+  examGoalLabel?: string;
 }
 
 export interface Course extends BaseEntity {
