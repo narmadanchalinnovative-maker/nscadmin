@@ -123,3 +123,19 @@ export interface ExamGoal {
   order: number;
   status?: 'active' | 'inactive';
 }
+
+export interface TestAttempt {
+  id?: string;
+  testId: string;
+  testTitle: string;
+  userId: string;
+  userName: string;
+  userPhone?: string;
+  score: number;
+  totalMarks: number;
+  correctCount: number;
+  incorrectCount: number;
+  skippedCount: number;
+  totalQuestions: number;
+  submittedAt?: any;
+}

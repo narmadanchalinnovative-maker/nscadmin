@@ -215,3 +215,20 @@ export type CreateTestFormSchema = z.infer<typeof createTestFormSchema>;
 export type CreateLiveClassFormSchema = z.infer<typeof createLiveClassFormSchema>;
 export type ExamGoalSchema = z.infer<typeof examGoalSchema>;
 export type CreateExamGoalFormSchema = z.infer<typeof createExamGoalFormSchema>;
+
+export const testAttemptSchema = z.object({
+  id: z.string().optional(),
+  testId: z.string(),
+  testTitle: z.string(),
+  userId: z.string(),
+  userName: z.string(),
+  score: z.number(),
+  totalMarks: z.number(),
+  correctCount: z.number(),
+  incorrectCount: z.number(),
+  skippedCount: z.number(),
+  totalQuestions: z.number(),
+  submittedAt: z.any().optional(),
+});
+
+export type TestAttemptSchema = z.infer<typeof testAttemptSchema>;

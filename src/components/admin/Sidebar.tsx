@@ -29,11 +29,12 @@ import { toast } from 'sonner';
 
 const menuItems = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: BarChart3 },
-  { label: 'Events', href: '/admin/events', icon: Calendar },
+
   { label: 'Batches', href: '/admin/batches', icon: Users },
   { label: 'Batch Notes', href: '/admin/notes', icon: FileText },
   { label: 'Courses', href: '/admin/courses', icon: BookOpen },
   { label: 'Tests', href: '/admin/tests', icon: CheckSquare },
+  { label: 'Test Results', href: '/admin/test-results', icon: Activity },
   { label: 'Live Classes', href: '/admin/live-classes', icon: Video },
   { label: 'Exam Goals', href: '/admin/exam-goals', icon: Target },
   { label: 'Goal Logs', href: '/admin/goal-logs', icon: Activity },
