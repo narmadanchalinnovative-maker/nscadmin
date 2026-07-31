@@ -33,6 +33,8 @@ export interface LiveClass extends BaseEntity {
   instructor?: string;
   courseId?: string;
   batchId?: string;
+  zoomMeetingId?: string;
+  zoomPassword?: string;
   isLive?: boolean;
   recordingUrl?: string;
 }
