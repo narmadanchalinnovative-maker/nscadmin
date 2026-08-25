@@ -24,11 +24,6 @@ export function VideoUpload({ value, onChange, storagePath }: VideoUploadProps) 
       toast.error('Please upload a video file.');
       return;
     }
-    // Allow larger files for video, e.g. 1GB
-    if (file.size > 1024 * 1024 * 1024) {
-      toast.error('Video must be less than 1GB.');
-      return;
-    }
 
     if (!storage) {
       toast.error('Firebase storage is not initialized.');
@@ -99,7 +94,7 @@ export function VideoUpload({ value, onChange, storagePath }: VideoUploadProps) 
               <>
                 <FileVideo className="w-8 h-8 text-gray-400 mb-2" />
                 <span className="text-sm font-medium text-gray-600">Click or drag video to upload</span>
-                <span className="text-xs text-gray-400 mt-1">MP4, WebM, or OGG (max. 1GB)</span>
+                <span className="text-xs text-gray-400 mt-1">MP4, WebM, or OGG (unlimited size)</span>
               </>
             )}
           </div>
@@ -108,3 +103,5 @@ export function VideoUpload({ value, onChange, storagePath }: VideoUploadProps) 
     </div>
   );
 }
+
+

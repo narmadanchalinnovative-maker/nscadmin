@@ -7,6 +7,7 @@ import { BaseEntity } from '@/types';
 import { X, Loader2 } from 'lucide-react';
 import { ImageUpload } from './ImageUpload';
 import { VideoUpload } from './VideoUpload';
+import { PdfUpload } from './PdfUpload';
 
 interface EntityFormProps {
   schema: ZodType<any>;
@@ -17,7 +18,7 @@ interface EntityFormProps {
   fields: {
     name: string;
     label: string;
-    type?: 'text' | 'textarea' | 'select' | 'url' | 'number' | 'image' | 'video' | 'datetime-local';
+    type?: 'text' | 'textarea' | 'select' | 'url' | 'number' | 'image' | 'video' | 'pdf' | 'datetime-local';
     placeholder?: string;
     required?: boolean;
     options?: Array<{ label: string; value: string }>;
@@ -94,12 +95,18 @@ export function EntityForm({
                   storagePath={field.storagePath}
                 />
               ) : field.type === 'video' ? (
-                <VideoUpload
-                  value={watch(field.name)}
-                  onChange={(url) => setValue(field.name, url, { shouldValidate: true })}
-                  storagePath={field.storagePath}
-                />
-              ) : (
+                  <VideoUpload
+                    value={watch(field.name)}
+                    onChange={(url) => setValue(field.name, url, { shouldValidate: true })}
+                    storagePath={field.storagePath}
+                  />
+                ) : field.type === 'pdf' ? (
+                  <PdfUpload
+                    value={watch(field.name)}
+                    onChange={(url) => setValue(field.name, url, { shouldValidate: true })}
+                    storagePath={field.storagePath}
+                  />
+                ) : (
                 <input
                   {...(field.type === 'number' ? register(field.name, { valueAsNumber: true }) : register(field.name))}
                   type={field.type || 'text'}
@@ -145,3 +152,7 @@ export function EntityForm({
     </div>
   );
 }
+
+
+
+

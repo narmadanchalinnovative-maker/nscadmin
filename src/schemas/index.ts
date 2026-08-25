@@ -48,6 +48,8 @@ export const batchSchema = baseEntitySchema.extend({
 
 export const courseSchema = baseEntitySchema.extend({
   batchId: z.string().min(1, 'Batch is required'),
+  videoUrl: z.string().url().optional().or(z.literal('')),
+  pdfUrl: z.string().url().optional().or(z.literal('')),
 });
 
 export const subjectSchema = baseEntitySchema.extend({
@@ -125,6 +127,8 @@ export const createCourseFormSchema = z.object({
   description: z.string().min(1, 'Description is required').max(2000),
   price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
   status: statusSchema.default('active'),
+  videoUrl: z.string().url().optional().or(z.literal('')),
+  pdfUrl: z.string().url().optional().or(z.literal('')),
 });
 
 export const createSubjectFormSchema = z.object({
@@ -232,3 +236,4 @@ export const testAttemptSchema = z.object({
 });
 
 export type TestAttemptSchema = z.infer<typeof testAttemptSchema>;
+

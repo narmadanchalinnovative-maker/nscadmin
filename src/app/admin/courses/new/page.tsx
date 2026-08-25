@@ -103,6 +103,18 @@ export default function CreateCoursePage() {
             required: false,
           },
           {
+            name: 'videoUrl',
+            label: 'Course Intro Video',
+            type: 'video',
+            required: false,
+          },
+          {
+            name: 'pdfUrl',
+            label: 'Course Material / Brochure (PDF)',
+            type: 'pdf',
+            required: false,
+          },
+          {
             name: 'status',
             label: 'Status',
             type: 'select',
@@ -117,3 +129,5 @@ export default function CreateCoursePage() {
     </div>
   );
 }
+
+

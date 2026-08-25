@@ -47,6 +47,8 @@ export interface Batch extends BaseEntity {
 
 export interface Course extends BaseEntity {
   batchId: string;
+  videoUrl?: string;
+  pdfUrl?: string;
 }
 
 export interface Subject extends BaseEntity {
@@ -141,3 +143,4 @@ export interface TestAttempt {
   totalQuestions: number;
   submittedAt?: any;
 }
+
