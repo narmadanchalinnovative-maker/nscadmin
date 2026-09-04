@@ -23,6 +23,7 @@ import {
   FileText,
   Headset,
   Ticket,
+  Tag,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -45,6 +46,7 @@ const menuItems = [
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Support Info', href: '/admin/support', icon: Headset },
   { label: 'Support Tickets', href: '/admin/support-tickets', icon: Ticket },
+  { label: 'Coupons', href: '/admin/coupons', icon: Tag },
 ];
 
 export function Sidebar() {

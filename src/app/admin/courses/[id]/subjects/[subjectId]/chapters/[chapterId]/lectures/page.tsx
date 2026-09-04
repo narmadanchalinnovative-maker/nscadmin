@@ -1,4 +1,5 @@
 'use client';
+import { TranscoderStatus } from "@/components/admin/TranscoderStatus";
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -84,7 +85,30 @@ export default function LecturesListPage() {
                     <div className="flex flex-col gap-1">
                       <h3 className="font-semibold text-lg text-gray-900">{lecture.title}</h3>
                       <p className="text-sm text-gray-600">{lecture.description}</p>
+                      
+                                              {lecture.videoProcessingStatus === "processing" && (
+                          <TranscoderStatus videoUrl={lecture.videoUrl} />
+                        )}
+                        {lecture.videoProcessingStatus === "error" && (
+                          <div className="mt-2 flex flex-col items-start gap-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full max-w-max">
+                              ❌ Video Processing Failed
+                            </span>
+                            <button 
+                              onClick={() => alert((lecture as any).videoProcessingError || "Unknown Error")} 
+                              className="text-xs text-red-600 underline hover:text-red-800"
+                            >
+                              View Error Log
+                            </button>
+                          </div>
+                        )}
+                      {lecture.videoProcessingStatus === 'ready' && (
+                        <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full max-w-max">
+                          ✅ Video Ready
+                        </span>
+                      )}
                       {lecture.videoUrl && (
+
                         <a href={lecture.videoUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">
                           View Video Link
                         </a>

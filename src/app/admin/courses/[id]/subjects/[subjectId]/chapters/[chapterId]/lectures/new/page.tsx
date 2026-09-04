@@ -26,9 +26,10 @@ export default function NewLecturePage() {
       }
       setLoading(true);
       
-      const finalData = { ...data };
+      const finalData = { ...data, videoProcessingStatus: 'ready' };
       if (finalData.videoUploadUrl) {
         finalData.videoUrl = finalData.videoUploadUrl;
+        finalData.videoProcessingStatus = 'processing';
         delete finalData.videoUploadUrl;
       }
 
