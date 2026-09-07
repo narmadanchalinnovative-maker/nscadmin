@@ -155,7 +155,8 @@ export const createLectureFormSchema = z.object({
   videoUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   videoUploadUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   thumbnailUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
-  status: statusSchema.default('active'),
+  pdfUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+    status: statusSchema.default('active'),
 });
 
 export const createTestFormSchema = z.object({

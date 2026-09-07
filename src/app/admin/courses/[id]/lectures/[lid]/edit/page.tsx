@@ -44,6 +44,7 @@ export default function EditLecturePage() {
             description: data.description,
             status: data.status,
             videoUrl: data.videoUrl || '',
+            pdfUrl: data.pdfUrl || '',
           });
         } else {
           toast.error('Lecture not found');
@@ -170,6 +171,22 @@ export default function EditLecturePage() {
               <input {...register('videoUrl')} placeholder="https://youtube.com/..." type="url" className="w-full px-4 py-2 border rounded-lg text-gray-900 bg-white" />
               {errors.videoUrl && <p className="mt-1 text-sm text-red-600">{String(errors.videoUrl?.message)}</p>}
             </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Notes PDF URL (Optional)
+          </label>
+          <input
+            {...register('pdfUrl')}
+            type="url"
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white"
+            placeholder="https://example.com/notes.pdf"
+          />
+          <p className="text-sm text-gray-500 mt-1">Leave Video URL blank to create a Notes-only lecture.</p>
+          {errors.pdfUrl && (
+            <p className="mt-1 text-sm text-red-600">{errors.pdfUrl.message}</p>
+          )}
+        </div>
+
           </div>
         </div>
 

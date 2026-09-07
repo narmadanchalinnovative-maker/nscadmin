@@ -82,6 +82,13 @@ export default function NewLecturePage() {
             type: 'url',
           },
           {
+            name: 'pdfUrl',
+            label: 'Notes PDF (Optional)',
+            type: 'pdf',
+            storagePath: `courses/${courseId}/subjects/${subjectId}/chapters/${chapterId}/lectures/notes`,
+            required: false,
+          },
+          {
             name: 'status',
             label: 'Status',
             type: 'select',

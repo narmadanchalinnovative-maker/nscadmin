@@ -24,6 +24,7 @@ import {
   Headset,
   Ticket,
   Tag,
+  LayoutTemplate,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -43,6 +44,7 @@ const menuItems = [
   { label: 'Notifications', href: '/admin/notifications', icon: Bell },
   { label: 'Doubts', href: '/admin/doubts', icon: MessageCircleQuestion },
   { label: 'Banners', href: '/admin/banners', icon: ImageIcon },
+  { label: 'Home Builder', href: '/admin/home-builder', icon: LayoutTemplate },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Support Info', href: '/admin/support', icon: Headset },
   { label: 'Support Tickets', href: '/admin/support-tickets', icon: Ticket },
