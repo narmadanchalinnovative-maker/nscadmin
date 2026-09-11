@@ -81,7 +81,7 @@ export function VideoUpload({ value, onChange, storagePath }: VideoUploadProps) 
       async () => {
         const bucket = uploadTask.snapshot.ref.bucket;
         const fullPath = uploadTask.snapshot.ref.fullPath;
-        const fileNameWithoutExt = fullPath.split("/").pop()?.split(".").slice(0, -1).join(".");
+        const fileNameWithoutExt = fullPath.split("/").pop()?.split(".").slice(0, -1).join(".") || "";
         const hlsUrl = `https://storage.googleapis.com/${bucket}/hls_lectures/${encodeURIComponent(fileNameWithoutExt)}/manifest.m3u8`;
         onChange(hlsUrl);
         setIsUploading(false);

@@ -68,7 +68,8 @@ export interface Lecture extends BaseEntity {
   chapterId: string;
   videoUrl: string;
   videoPath?: string;
-  videoProcessingStatus?: 'processing' | 'ready';
+  videoProcessingStatus?: 'processing' | 'ready' | 'error';
+  pdfUrl?: string;
   order?: number;
 }
 
