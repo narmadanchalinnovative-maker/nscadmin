@@ -44,7 +44,7 @@ export default function EditLecturePage() {
             description: data.description,
             status: data.status,
             videoUrl: data.videoUrl || '',
-            pdfUrl: data.pdfUrl || '',
+            pdfUrl: data.pdfUrl || '', 
           });
         } else {
           toast.error('Lecture not found');

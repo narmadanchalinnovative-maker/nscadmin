@@ -20,7 +20,7 @@ export function VideoUpload({ value, onChange, storagePath }: VideoUploadProps) 
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('');
   const [eta, setEta] = useState('');
-  const [enableCompression, setEnableCompression] = useState(true);
+  const [enableCompression, setEnableCompression] = useState(false);
   const ffmpegRef = useRef(new FFmpeg());
 
   const loadFfmpeg = async () => {
@@ -223,5 +223,6 @@ export function VideoUpload({ value, onChange, storagePath }: VideoUploadProps) 
     </div>
   );
 }
+
 
 
