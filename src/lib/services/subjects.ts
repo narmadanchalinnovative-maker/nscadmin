@@ -1,67 +1,37 @@
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit, startAfter, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Subject, PaginatedResponse } from '@/types';
 import { subjectSchema } from '@/schemas';
-
-const COLLECTION = 'subjects';
+import { ApiService } from '../api-service';
 
 export const subjectService = {
   async create(data: Partial<Subject>, adminId: string): Promise<string> {
     const validated = subjectSchema.parse(data);
-    const docRef = doc(collection(db, COLLECTION));
-    
-    await setDoc(docRef, {
+    const result = await ApiService.post('/admin/data/subjects', {
       ...validated,
       createdBy: adminId,
       updatedBy: adminId,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
     });
-    
-    return docRef.id;
+    return result.data.id;
   },
 
   async update(id: string, data: Partial<Subject>, adminId: string): Promise<void> {
-    const docRef = doc(db, COLLECTION, id);
-    const updateData = {
+    await ApiService.put(`/admin/data/subjects/${id}`, {
       ...data,
       updatedBy: adminId,
-      updatedAt: Timestamp.now(),
-    };
-    
-    await updateDoc(docRef, updateData);
+    });
   },
 
   async get(id: string): Promise<Subject | null> {
-    const docRef = doc(db, COLLECTION, id);
-    const docSnap = await getDoc(docRef);
-    
-    if (!docSnap.exists()) return null;
-    
-    return {
-      id: docSnap.id,
-      ...docSnap.data()
-    } as Subject;
+    try {
+      const res = await ApiService.get(`/admin/data/subjects/${id}`);
+      return res.data;
+    } catch {
+      return null;
+    }
   },
 
   async listByCourse(courseId: string, page = 1, limitCount = 100): Promise<PaginatedResponse<Subject & { id: string }>> {
-    const q = query(
-      collection(db, COLLECTION),
-      where('courseId', '==', courseId)
-    );
-
-    const snapshot = await getDocs(q);
-    let items = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as (Subject & { id: string })[];
-
-    // Sort in memory to avoid needing a composite index
-    items.sort((a, b) => {
-      const timeA = a.createdAt ? (a.createdAt as any).toMillis() : 0;
-      const timeB = b.createdAt ? (b.createdAt as any).toMillis() : 0;
-      return timeB - timeA;
-    });
+    const res = await ApiService.get(`/admin/data/subjects?courseId=${courseId}`);
+    let items = res.data || [];
 
     const total = items.length;
     const skipCount = (page - 1) * limitCount;
@@ -77,7 +47,6 @@ export const subjectService = {
   },
 
   async delete(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTION, id);
-    await deleteDoc(docRef);
+    await ApiService.delete(`/admin/data/subjects/${id}`);
   }
 };

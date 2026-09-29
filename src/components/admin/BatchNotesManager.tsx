@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import {
   collection,
   addDoc,
@@ -12,7 +12,6 @@ import {
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { UploadCloud, Loader2, FileText, Trash2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -70,47 +69,45 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
       return;
     }
 
-    if (!storage) {
-      toast.error('Storage is not initialized');
-      return;
-    }
-
     try {
       setIsUploading(true);
-      const storageRef = ref(storage, `batches/${batchId}/notes/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      setProgress(50);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://201.18.192.154:3001/api';
+      const response = await fetch(`${apiUrl}/video/upload-file`, {
+        method: 'POST',
+        body: formData,
+      });
 
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const p = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setProgress(p);
-        },
-        (error) => {
-          console.error(error);
-          toast.error('Failed to upload PDF');
-          setIsUploading(false);
-        },
-        async () => {
-          const pdfUrl = await getDownloadURL(uploadTask.snapshot.ref);
-          await addDoc(collection(db, `batches/${batchId}/notes`), {
-            title,
-            description,
-            type,
-            pdfUrl,
-            createdAt: serverTimestamp(),
-          });
-          toast.success('Note added successfully');
-          setShowForm(false);
-          setTitle('');
-          setDescription('');
-          setFile(null);
-          setIsUploading(false);
-        }
-      );
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setProgress(100);
+        const pdfUrl = data.fileUrl;
+        
+        await addDoc(collection(db, `batches/${batchId}/notes`), {
+          title,
+          description,
+          type,
+          pdfUrl,
+          createdAt: serverTimestamp(),
+        });
+        
+        toast.success('Note added successfully');
+        setShowForm(false);
+        setTitle('');
+        setDescription('');
+        setFile(null);
+      } else {
+        throw new Error(data.error || 'Upload failed');
+      }
     } catch (error) {
       console.error(error);
       toast.error('Failed to save note');
+    } finally {
       setIsUploading(false);
     }
   };
@@ -119,15 +116,6 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
     if (!confirm('Are you sure you want to delete this note?')) return;
     try {
       await deleteDoc(doc(db, `batches/${batchId}/notes/${note.id}`));
-      // Optionally delete from storage as well
-      if (storage) {
-        try {
-          const storageRef = ref(storage, note.pdfUrl);
-          await deleteObject(storageRef);
-        } catch (err) {
-          // file might not exist in storage or different url, ignore
-        }
-      }
       toast.success('Note deleted');
     } catch (error) {
       console.error(error);

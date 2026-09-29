@@ -47,13 +47,19 @@ export default function EditLecturePage() {
       setLoading(true);
 
       const finalData = { ...data };
-      if (finalData.videoUploadUrl) {
-        finalData.videoUrl = finalData.videoUploadUrl;
+      const rawVideoKey = finalData.videoUploadUrl;
+
+      if (rawVideoKey) {
+        finalData.videoProcessingStatus = 'QUEUED';
+        finalData.videoUrl = ''; // Backend will update this to the HLS URL when done
+        finalData.videoPath = rawVideoKey; // Pass this to trigger the transcode worker automatically
         delete finalData.videoUploadUrl;
       }
 
       await lectureService.update(lectureId, finalData, adminUser.uid);
+
       toast.success('Lecture updated successfully');
+
       router.push(`/admin/courses/${courseId}/subjects/${subjectId}/chapters/${chapterId}/lectures`);
     } catch (error) {
       console.error('Error updating lecture:', error);

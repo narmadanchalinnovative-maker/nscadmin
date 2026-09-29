@@ -29,7 +29,7 @@ export const sectionService = {
     return deleteDocument(COLLECTION_NAME, id);
   },
 
-  async list(page = 1, limit = 10, filters?: Record<string, unknown>): Promise<PaginatedResponse<Section & { id: string }>> {
+  async list(page = 1, limit = 10, filters?: any): Promise<PaginatedResponse<Section & { id: string }>> {
     const pageNum = Math.max(1, page);
     const pageSize = Math.min(limit, 100);
     const skipCount = (pageNum - 1) * pageSize;

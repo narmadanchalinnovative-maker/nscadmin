@@ -17,7 +17,7 @@ interface Message {
 }
 
 export default function AdminDoubtChatModal({ doubt, onClose }: { doubt: any, onClose: () => void }) {
-  const { adminUser, user } = useAuth();
+  const { adminUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -47,7 +47,7 @@ export default function AdminDoubtChatModal({ doubt, onClose }: { doubt: any, on
     try {
       const msg = text;
       setText('');
-      await sendDoubtMessage(doubt.id, msg, undefined, undefined, user?.displayName || adminUser?.email?.split('@')[0] || 'Admin');
+      await sendDoubtMessage(doubt.id, msg, undefined, undefined, adminUser?.email?.split('@')[0] || 'Admin');
     } catch (err) {
       toast.error('Failed to send message');
       setText(text);
@@ -65,7 +65,7 @@ export default function AdminDoubtChatModal({ doubt, onClose }: { doubt: any, on
     try {
       const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
       const url = await uploadChatMedia(doubt.id, file);
-      await sendDoubtMessage(doubt.id, '', url, mediaType, user?.displayName || adminUser?.email?.split('@')[0] || 'Admin');
+      await sendDoubtMessage(doubt.id, '', url, mediaType, adminUser?.email?.split('@')[0] || 'Admin');
     } catch (err) {
       toast.error('Failed to upload file');
     } finally {

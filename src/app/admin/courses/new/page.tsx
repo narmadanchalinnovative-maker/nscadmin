@@ -24,7 +24,7 @@ export default function CreateCoursePage() {
         if (!mounted) return;
         setBatches(res.data);
         setBatchOptions(
-          res.data.map((batch) => ({
+          res.data.map((batch: any) => ({
             label: batch.title || 'Untitled',
             value: batch.id,
           }))

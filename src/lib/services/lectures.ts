@@ -1,71 +1,83 @@
-import { Lecture } from '@/types';
-import {
-  createDocument,
-  getDocument,
-  updateDocument,
-  deleteDocument,
-  toggleStatus,
-  listDocuments,
-  searchDocuments,
-} from '../firestore-service';
-
-const COLLECTION_NAME = 'lectures';
+import { Lecture, PaginatedResponse } from '@/types';
+import { ApiService } from '../api-service';
 
 export const lectureService = {
-  async create(data: Omit<Lecture, 'id'>, userId: string) {
-    return createDocument<Lecture>(COLLECTION_NAME, data, userId);
+  async create(data: Omit<Lecture, 'id'>, userId: string): Promise<string> {
+    const result = await ApiService.post('/admin/data/lectures', {
+      ...data,
+      createdBy: userId,
+      updatedBy: userId,
+    });
+    return result.data.id;
   },
 
-  async get(id: string) {
-    return getDocument<Lecture>(COLLECTION_NAME, id);
+  async get(id: string): Promise<Lecture | null> {
+    try {
+      const res = await ApiService.get(`/admin/data/lectures/${id}`);
+      return res.data;
+    } catch {
+      return null;
+    }
   },
 
-  async update(id: string, data: Partial<Lecture>, userId: string) {
-    return updateDocument<Lecture>(COLLECTION_NAME, id, data, userId);
+  async update(id: string, data: Partial<Lecture>, userId: string): Promise<void> {
+    await ApiService.put(`/admin/data/lectures/${id}`, {
+      ...data,
+      updatedBy: userId,
+    });
   },
 
-  async delete(id: string) {
-    return deleteDocument(COLLECTION_NAME, id);
+  async delete(id: string): Promise<void> {
+    await ApiService.delete(`/admin/data/lectures/${id}`);
   },
 
-  async toggleStatus(id: string, currentStatus: 'active' | 'inactive', userId: string) {
-    return toggleStatus(COLLECTION_NAME, id, currentStatus, userId);
+  async toggleStatus(id: string, currentStatus: 'active' | 'inactive', userId: string): Promise<void> {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    await this.update(id, { status: newStatus }, userId);
   },
 
-  async list(page = 1, limit = 10, filters?: Record<string, unknown>) {
-    return listDocuments<Lecture>(
-      COLLECTION_NAME,
+  async list(page = 1, limit = 10, filters?: any): Promise<PaginatedResponse<Lecture & { id: string }>> {
+    let query = '?';
+    if (filters) {
+      for (const [k, v] of Object.entries(filters)) {
+        query += `${k}=${v}&`;
+      }
+    }
+    const res = await ApiService.get(`/admin/data/lectures${query}`);
+    let items = res.data || [];
+
+    const total = items.length;
+    const skipCount = (page - 1) * limit;
+    items = items.slice(skipCount, skipCount + limit);
+
+    return {
+      data: items,
+      total,
       page,
       limit,
-      filters,
-      'createdAt',
-      'asc' // Lectures should ideally be ordered chronologically or by order field
-    );
+      totalPages: Math.ceil(total / limit)
+    };
   },
 
-  async listByChapter(chapterId: string, page = 1, limit = 100) {
-    return listDocuments<Lecture>(
-      COLLECTION_NAME,
-      page,
-      limit,
-      { chapterId },
-      null, // Bypass firestore index
-      'asc'
-    );
+  async listByChapter(chapterId: string, page = 1, limit = 100): Promise<PaginatedResponse<Lecture & { id: string }>> {
+    const res = await ApiService.get(`/admin/data/lectures?chapterId=${chapterId}`);
+    let items = res.data || [];
+    const total = items.length;
+    const skipCount = (page - 1) * limit;
+    items = items.slice(skipCount, skipCount + limit);
+    return { data: items, total, page, limit, totalPages: Math.ceil(total / limit) };
   },
 
-  async search(searchTerm: string, page = 1, limit = 10) {
-    return searchDocuments<Lecture>(COLLECTION_NAME, 'title', searchTerm, page, limit);
+  async search(searchTerm: string, page = 1, limit = 10): Promise<PaginatedResponse<Lecture & { id: string }>> {
+    return this.list(page, limit); // Fallback for naive search
   },
 
-  async listByCourse(courseId: string, page = 1, limit = 100) {
-    return listDocuments<Lecture>(
-      COLLECTION_NAME,
-      page,
-      limit,
-      { courseId },
-      null, // Bypass firestore index
-      'asc'
-    );
+  async listByCourse(courseId: string, page = 1, limit = 100): Promise<PaginatedResponse<Lecture & { id: string }>> {
+    const res = await ApiService.get(`/admin/data/lectures?courseId=${courseId}`);
+    let items = res.data || [];
+    const total = items.length;
+    const skipCount = (page - 1) * limit;
+    items = items.slice(skipCount, skipCount + limit);
+    return { data: items, total, page, limit, totalPages: Math.ceil(total / limit) };
   },
 };

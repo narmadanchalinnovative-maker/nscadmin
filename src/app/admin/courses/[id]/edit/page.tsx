@@ -32,7 +32,7 @@ export default function EditCoursePage() {
         ]);
         setBatches(fetchedBatches.data);
         setBatchOptions(
-          fetchedBatches.data.map((batch) => ({
+          fetchedBatches.data.map((batch: any) => ({
             label: batch.title || 'Untitled',
             value: batch.id,
           }))

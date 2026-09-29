@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
 import { UploadCloud, Loader2, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,35 +23,33 @@ export function PdfUpload({ value, onChange, storagePath }: PdfUploadProps) {
       return;
     }
 
-    if (!storage) {
-      toast.error('Firebase storage is not initialized.');
-      return;
-    }
-
     setIsUploading(true);
-    setProgress(0);
+    setProgress(50);
 
-    const basePath = storagePath || 'courses/materials';
-    const storageRef = ref(storage, `${basePath}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://201.18.192.154:3001/api';
+      const response = await fetch(`${apiUrl}/video/upload-file`, {
+        method: 'POST',
+        body: formData,
+      });
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const p = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setProgress(p);
-      },
-      (error) => {
-        console.error('Upload error:', error);
-        toast.error('Failed to upload PDF.');
-        setIsUploading(false);
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        onChange(downloadURL);
-        setIsUploading(false);
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setProgress(100);
+        onChange(data.fileUrl);
+      } else {
+        throw new Error(data.error || 'Upload failed');
       }
-    );
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload PDF.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -99,7 +95,3 @@ export function PdfUpload({ value, onChange, storagePath }: PdfUploadProps) {
     </div>
   );
 }
-
-
-
-

@@ -17,12 +17,12 @@ export const testAttemptService = {
     return deleteDocument(COLLECTION_NAME, id);
   },
 
-  async list(page = 1, limit = 10, filters?: Record<string, any>) {
+  async list(page = 1, limit = 10, filters?: any) {
     return listDocuments<TestAttempt>(
       COLLECTION_NAME,
       page,
       limit,
-      filters,
+      filters as any,
       'submittedAt',
       'desc'
     );

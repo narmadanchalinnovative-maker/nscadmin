@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20"
+    "node": ">=18.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -12,20 +12,17 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@ffmpeg/core": "^0.12.10",
-    "@ffmpeg/ffmpeg": "^0.12.15",
-    "@ffmpeg/util": "^0.12.2",
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-table": "^8.21.3",
     "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
     "firebase": "^12.15.0",
-    "firebase-admin": "^13.10.0",
-    "firebase-functions": "^7.2.5",
     "lucide-react": "^1.14.0",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.75.0",
+    "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
     "zod": "^4.4.3"
   },

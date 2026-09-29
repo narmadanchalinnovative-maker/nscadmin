@@ -33,6 +33,7 @@ export interface LiveClass extends BaseEntity {
   instructor?: string;
   courseId?: string;
   batchId?: string;
+  sessionType?: string;
   zoomMeetingId?: string;
   zoomPassword?: string;
   isLive?: boolean;
@@ -68,7 +69,7 @@ export interface Lecture extends BaseEntity {
   chapterId: string;
   videoUrl: string;
   videoPath?: string;
-  videoProcessingStatus?: 'processing' | 'ready' | 'error';
+  videoProcessingStatus?: 'PROCESSING' | 'COMPLETED' | 'ERROR' | 'QUEUED';
   pdfUrl?: string;
   order?: number;
 }
@@ -124,7 +125,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ExamGoal {
-  id?: string;
+  id: string;
   label: string;
   order: number;
   status?: 'active' | 'inactive';

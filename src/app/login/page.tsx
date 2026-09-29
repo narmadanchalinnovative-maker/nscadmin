@@ -2,11 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { checkAdminStatus } from '@/lib/auth-guards';
 import { Loader2, Lock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { ApiService } from '@/lib/api-service';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -18,29 +16,24 @@ export default function LoginPage() {
     event.preventDefault();
     setLoading(true);
     try {
-      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
-      const user = credential.user;
-      const isAdmin = await checkAdminStatus(user.uid, user.email ?? undefined);
+      const response = await ApiService.post('/admin/login', {
+        email: email.trim(),
+        password,
+      });
 
-      if (isAdmin) {
+      if (response.success && response.token) {
+        // Save the token for ApiService to use
+        localStorage.setItem('admin_token', response.token);
+        
         toast.success('Login successful!');
-        router.push('/admin/dashboard');
+        // Refresh the page or force a hard navigation so the new token is picked up
+        window.location.href = '/admin';
       } else {
-        await signOut(auth);
-        setPassword('');
-        toast.error('Access denied. You are not authorized to access this admin panel.');
+        toast.error(response.message || 'Access denied.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign-in error:', error);
-
-      const code = (error as { code?: string })?.code;
-      if (code === 'auth/invalid-email') {
-        toast.error('Please enter a valid email address.');
-      } else if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-        toast.error('Invalid email or password.');
-      } else {
-        toast.error('Sign-in failed. Please try again.');
-      }
+      toast.error('Invalid email or password.');
     } finally {
       setLoading(false);
     }
@@ -114,7 +107,7 @@ export default function LoginPage() {
 
         <div className="border-t border-white/10 bg-white/5 px-8 py-5 text-sm text-slate-300">
           <p className="leading-6">
-            Your Firebase Auth user must already exist and have a matching <span className="font-semibold text-white">admin_users</span> document with <span className="font-semibold text-white">active: true</span>.
+            If no admin exists, the first login attempt will create the super admin automatically!
           </p>
         </div>
       </div>

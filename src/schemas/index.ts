@@ -18,7 +18,6 @@ export const baseEntitySchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
-  price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
   status: statusSchema,
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
@@ -48,6 +47,7 @@ export const batchSchema = baseEntitySchema.extend({
 
 export const courseSchema = baseEntitySchema.extend({
   batchId: z.string().min(1, 'Batch is required'),
+  price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
   videoUrl: z.string().url().optional().or(z.literal('')),
   pdfUrl: z.string().url().optional().or(z.literal('')),
 });
@@ -149,14 +149,14 @@ export const createChapterFormSchema = z.object({
 export const createLectureFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
-  subjectId: z.string().optional(),
-  courseId: z.string().optional(),
-  chapterId: z.string().optional(),
-  videoUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
-  videoUploadUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
-  thumbnailUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
-  pdfUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
-    status: statusSchema.default('active'),
+  subjectId: z.string().optional().nullable(),
+  courseId: z.string().optional().nullable(),
+  chapterId: z.string().optional().nullable(),
+  videoUrl: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
+  videoUploadUrl: z.string().optional().nullable().or(z.literal('')),
+  thumbnailUrl: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
+  pdfUrl: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
+  status: z.enum(['active', 'inactive']).optional().nullable().default('active'),
 });
 
 export const createTestFormSchema = z.object({
@@ -182,7 +182,6 @@ export const createLiveClassFormSchema = z.object({
   description: z.string().min(1, 'Description is required').max(2000),
   startTime: z.string().optional().or(z.literal('')),
   duration: z.number().optional(),
-  meetingUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   instructor: z.string().optional().or(z.literal('')),
   courseId: z.string().optional().or(z.literal('')),
   batchId: z.string().optional().or(z.literal('')),

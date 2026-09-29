@@ -1,14 +1,20 @@
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from './firebase';
-
 export async function uploadLiveClassAsset(file: File, docId: string, folder = 'live_classes') {
-  if (!storage) throw new Error('Firebase storage not initialized');
-  const path = `${folder}/${docId}/${file.name}`;
-  const storageRef = ref(storage, path);
-  const snap = await new Promise((resolve, reject) => {
-    const task = uploadBytesResumable(storageRef, file);
-    task.on('state_changed', null, reject, () => resolve(task.snapshot));
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://201.18.192.154:3001/api';
+  const response = await fetch(`${apiUrl}/video/upload-file`, {
+    method: 'POST',
+    body: formData,
   });
-  const url = await getDownloadURL(ref(storage, path));
-  return { path, url };
+
+  const data = await response.json();
+  
+  if (response.ok && data.success) {
+    const url = data.fileUrl;
+    // We return path same as url since we don't have a storage ref path anymore
+    return { path: url, url };
+  } else {
+    throw new Error(data.error || 'Upload failed');
+  }
 }

@@ -3,10 +3,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, setDoc, serverTimestamp, getDocs, collection } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
+import { couponService } from '@/lib/services/coupons';
+import { ApiService } from '@/lib/api-service';
 
 const couponSchema = z.object({
   code: z.string().min(3, "Code must be at least 3 characters").max(20).toUpperCase(),
@@ -33,10 +33,11 @@ export function CouponForm({ initialData, onClose }: { initialData?: any, onClos
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch courses for the dropdown
-    getDocs(collection(db, 'courses')).then(snap => {
-      setCourses(snap.docs.map(doc => ({ id: doc.id, title: doc.data().title })));
-    });
+    // Fetch courses for the dropdown from Postgres
+    ApiService.get('/admin/data/courses').then((res: any) => {
+      const coursesData = res?.data || res || [];
+      setCourses(coursesData.map((c: any) => ({ id: c.id, title: c.title })));
+    }).catch(console.error);
   }, []);
 
   const form = useForm({
@@ -57,17 +58,22 @@ export function CouponForm({ initialData, onClose }: { initialData?: any, onClos
   const onSubmit = async (data: CouponFormData) => {
     setLoading(true);
     try {
-      const docRef = doc(db, 'coupons', data.code);
-      await setDoc(docRef, {
+      const payload = {
+        code: data.code,
         description: data.description,
         discountAmount: data.discountAmount,
         isActive: data.isActive,
         scope: data.scope,
         courseId: data.scope === 'SINGLE_COURSE' ? data.courseId : null,
         terms: data.terms,
-        updatedAt: serverTimestamp(),
-        createdAt: initialData?.createdAt || serverTimestamp(),
-      });
+      };
+
+      if (initialData) {
+        await couponService.update(initialData.id, payload, 'admin');
+      } else {
+        await couponService.create(payload, 'admin');
+      }
+
       toast.success(`Coupon ${data.code} saved successfully!`);
       onClose();
     } catch (error) {

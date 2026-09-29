@@ -17,7 +17,7 @@ interface Message {
 }
 
 export default function AdminTicketChatModal({ ticket, onClose }: { ticket: any, onClose: () => void }) {
-  const { adminUser, user } = useAuth();
+  const { adminUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -47,7 +47,7 @@ export default function AdminTicketChatModal({ ticket, onClose }: { ticket: any,
     try {
       const msg = text;
       setText('');
-      await sendSupportTicketMessage(ticket.id, msg, undefined, undefined, user?.displayName || adminUser?.email?.split('@')[0] || 'Admin');
+      await sendSupportTicketMessage(ticket.id, msg, undefined, undefined, adminUser?.email?.split('@')[0] || 'Admin');
     } catch (err) {
       toast.error('Failed to send message');
       setText(text);
@@ -65,7 +65,7 @@ export default function AdminTicketChatModal({ ticket, onClose }: { ticket: any,
     try {
       const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
       const url = await uploadSupportChatMedia(ticket.id, file);
-      await sendSupportTicketMessage(ticket.id, '', url, mediaType, user?.displayName || adminUser?.email?.split('@')[0] || 'Admin');
+      await sendSupportTicketMessage(ticket.id, '', url, mediaType, adminUser?.email?.split('@')[0] || 'Admin');
     } catch (err) {
       toast.error('Failed to upload file');
     } finally {

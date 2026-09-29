@@ -25,12 +25,13 @@ import {
   Ticket,
   Tag,
   LayoutTemplate,
+  Database,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 const menuItems = [
-  { label: 'Dashboard', href: '/admin/dashboard', icon: BarChart3 },
+  { label: 'Dashboard', href: '/admin', icon: BarChart3 },
 
   { label: 'Batches', href: '/admin/batches', icon: Users },
   { label: 'Batch Notes', href: '/admin/notes', icon: FileText },
@@ -45,6 +46,8 @@ const menuItems = [
   { label: 'Doubts', href: '/admin/doubts', icon: MessageCircleQuestion },
   { label: 'Banners', href: '/admin/banners', icon: ImageIcon },
   { label: 'Home Builder', href: '/admin/home-builder', icon: LayoutTemplate },
+  { label: 'Storage Manager', href: '/admin/storage', icon: Database },
+  { label: 'Cloudinary Manager', href: '/admin/cloudinary', icon: Database },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Support Info', href: '/admin/support', icon: Headset },
   { label: 'Support Tickets', href: '/admin/support-tickets', icon: Ticket },
@@ -89,7 +92,7 @@ export function Sidebar() {
         <nav className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname.startsWith(item.href);
+            const isActive = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}

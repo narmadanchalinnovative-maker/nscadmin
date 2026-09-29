@@ -32,12 +32,12 @@ export const batchService = {
     return toggleStatus(COLLECTION_NAME, id, currentStatus, userId);
   },
 
-  async list(page = 1, limit = 10, filters?: Record<string, any>) {
+  async list(page = 1, limit = 10, filters?: any) {
     return listDocuments<Batch>(
       COLLECTION_NAME,
       page,
       limit,
-      filters,
+      filters as any,
       'createdAt',
       'desc'
     );

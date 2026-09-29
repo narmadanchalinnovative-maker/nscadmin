@@ -1,61 +1,56 @@
 import { ExamGoal } from '@/types';
-import {
-  createDocument,
-  getDocument,
-  updateDocument,
-  deleteDocument,
-  listDocuments,
-  toggleStatus,
-} from '../firestore-service';
-
-const COLLECTION_NAME = 'app_pages/_change-exam-goal/options';
+import { ApiService } from '../api-service';
 
 export const examGoalService = {
   async create(data: Omit<ExamGoal, 'id'>, userId: string) {
-    return createDocument<ExamGoal>(COLLECTION_NAME, data, userId);
+    return ApiService.post('/exam-goals', data);
   },
 
   async get(id: string) {
-    return getDocument<ExamGoal>(COLLECTION_NAME, id);
+    return ApiService.get(`/exam-goals/${id}`);
   },
 
   async update(id: string, data: Partial<ExamGoal>, userId: string) {
-    return updateDocument<ExamGoal>(COLLECTION_NAME, id, data, userId);
+    return ApiService.put(`/exam-goals/${id}`, data);
   },
 
   async delete(id: string) {
-    return deleteDocument(COLLECTION_NAME, id);
+    return ApiService.delete(`/exam-goals/${id}`);
   },
 
   async toggleStatus(id: string, currentStatus: 'active' | 'inactive', userId: string) {
-    return toggleStatus(COLLECTION_NAME, id, currentStatus, userId);
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    return ApiService.put(`/exam-goals/${id}`, { status: newStatus });
   },
 
-  async list(page = 1, limit = 10, filters?: Record<string, any>) {
-    return listDocuments<ExamGoal>(
-      COLLECTION_NAME,
+  async list(page = 1, limit = 10, filters?: any) {
+    // The current admin component expects { items: [], total: 0 }
+    const response: any = await ApiService.get('/exam-goals');
+    const allGoals: ExamGoal[] = Array.isArray(response) ? response : (response.data || []);
+    
+    // Manual pagination since our basic API returns all goals
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    
+    let filtered = allGoals;
+    if (filters?.status) {
+      filtered = filtered.filter(g => g.status === filters.status);
+    }
+
+    return {
+      data: filtered.slice(start, end),
+      total: filtered.length,
       page,
       limit,
-      filters,
-      'order',
-      'asc'
-    );
+      totalPages: Math.ceil(filtered.length / limit)
+    };
   },
 
   async listAll() {
     try {
-      const db = (await import('../firebase')).db;
-      const collectionRef = (await import('firebase/firestore')).collection(db, COLLECTION_NAME);
-      const q = (await import('firebase/firestore')).query(
-        collectionRef
-      );
-      const snapshot = await (await import('firebase/firestore')).getDocs(q);
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as (ExamGoal & { id: string })[];
-      
-      return docs
+      const response: any = await ApiService.get('/exam-goals');
+      const allGoals: ExamGoal[] = Array.isArray(response) ? response : (response.data || []);
+      return allGoals
         .filter(doc => doc.status !== 'inactive')
         .sort((a, b) => (a.order || 0) - (b.order || 0));
     } catch (error) {

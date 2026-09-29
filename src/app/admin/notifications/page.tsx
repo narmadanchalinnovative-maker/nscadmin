@@ -28,20 +28,29 @@ export default function NotificationsPage() {
     setStatus({ type: null, msg: '' });
 
     try {
-      await addDoc(collection(db, 'notifications'), {
-        title,
-        message,
-        imageUrl: imageUrl || '',
-        targetScreen: targetScreen || '',
-        icon: 'notifications_none_rounded',
-        iconColor: 0xFF176CAB,
-        backgroundColor: 0xFFEAF6FF,
-        sendPush: sendPush,
-        sendInApp: sendInApp,
-        createdAt: Timestamp.now(),
+      const API_BASE = 'http://201.18.192.154:5000/api';
+      const response = await fetch(`${API_BASE}/admin/notifications/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify({
+          title,
+          message,
+          imageUrl,
+          targetScreen,
+          sendPush,
+          sendInApp
+        })
       });
 
-      setStatus({ type: 'success', msg: 'Notification scheduled successfully!' });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to send notification');
+      }
+
+      setStatus({ type: 'success', msg: 'Notification sent successfully!' });
       setTitle('');
       setMessage('');
       setImageUrl('');

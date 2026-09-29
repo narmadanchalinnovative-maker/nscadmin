@@ -1,58 +1,28 @@
 import { Test } from '@/types';
-import { doc } from 'firebase/firestore';
 import {
   createDocument,
   getDocument,
   updateDocument,
   deleteDocument,
-  setBatchChildDocument,
-  deleteBatchChildDocument,
   toggleStatus,
   listDocuments,
   searchDocuments,
-  findDocumentInCollectionGroup,
 } from '../firestore-service';
-import { db } from '../firebase';
 
 const COLLECTION_NAME = 'tests';
-
-async function findTestDocRef(id: string) {
-  const directRef = doc(db, COLLECTION_NAME, id);
-  const directSnap = await getDocument<Test>(COLLECTION_NAME, id);
-  if (directSnap) {
-    return { id, ref: directRef, data: directSnap };
-  }
-
-  const foundInGroup = await findDocumentInCollectionGroup<Test>(COLLECTION_NAME, id);
-  if (!foundInGroup) return null;
-
-  return {
-    id: foundInGroup.id,
-    ref: foundInGroup.ref,
-    data: foundInGroup as Test & { id: string },
-  };
-}
 
 export const testService = {
   async create(data: Omit<Test, 'id'>, userId: string) {
     const id = await createDocument<Test>(COLLECTION_NAME, data, userId);
-    const savedTest = await getDocument<Test>(COLLECTION_NAME, id);
-    if (savedTest) {
-      await setBatchChildDocument(COLLECTION_NAME, id, savedTest);
-    }
     return id;
   },
 
   async get(id: string) {
-    const found = await findTestDocRef(id);
-    return found?.data ?? null;
+    return getDocument<Test>(COLLECTION_NAME, id);
   },
 
   async update(id: string, data: Partial<Test>, userId: string, existingTest?: Test | null) {
-    const located = existingTest
-      ? { data: existingTest, ref: doc(db, COLLECTION_NAME, id) }
-      : await findTestDocRef(id);
-    const currentTest = located?.data ?? null;
+    const currentTest = existingTest || await getDocument<Test>(COLLECTION_NAME, id);
     if (!currentTest) {
       throw new Error('Test not found');
     }
@@ -63,37 +33,22 @@ export const testService = {
     } as Test;
 
     await updateDocument<Test>(COLLECTION_NAME, id, mergedTest, userId);
-    const updatedTest = await findTestDocRef(id);
-    if (updatedTest) {
-      await setBatchChildDocument(COLLECTION_NAME, id, updatedTest.data);
-      if (currentTest?.batchId && currentTest.batchId !== updatedTest.data.batchId) {
-        await deleteBatchChildDocument(COLLECTION_NAME, currentTest.batchId, id);
-      }
-    }
   },
 
   async delete(id: string) {
-    const existingTest = await findTestDocRef(id);
-    if (existingTest?.data.batchId) {
-      await deleteBatchChildDocument(COLLECTION_NAME, existingTest.data.batchId, id);
-    }
     return deleteDocument(COLLECTION_NAME, id);
   },
 
   async toggleStatus(id: string, currentStatus: 'active' | 'inactive', userId: string) {
     await toggleStatus(COLLECTION_NAME, id, currentStatus, userId);
-    const updatedTest = await findTestDocRef(id);
-    if (updatedTest) {
-      await setBatchChildDocument(COLLECTION_NAME, id, updatedTest.data);
-    }
   },
 
-  async list(page = 1, limit = 10, filters?: Record<string, any>) {
+  async list(page = 1, limit = 10, filters?: any) {
     return listDocuments<Test>(
       COLLECTION_NAME,
       page,
       limit,
-      filters,
+      filters as any,
       'createdAt',
       'desc'
     );

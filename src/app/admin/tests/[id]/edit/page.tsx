@@ -40,7 +40,7 @@ export default function EditTestPage() {
           batchService.list(1, 100),
         ]);
         setBatchOptions(
-          batches.data.map((batch) => ({
+          batches.data.map((batch: any) => ({
             label: batch.title || 'Untitled',
             value: batch.id,
           }))

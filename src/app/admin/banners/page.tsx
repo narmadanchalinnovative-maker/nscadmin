@@ -1,20 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import { bannerService, Banner } from '@/lib/services/banners';
+import { ApiService } from '@/lib/api-service';
 
-interface Banner {
-  id: string;
-  imageUrl: string;
-  routeName: string;
-  order: number;
-  status: 'active' | 'inactive';
-}
 
 interface Batch {
   id: string;
@@ -48,16 +41,14 @@ export default function BannersPage() {
 
   const fetchData = async () => {
     try {
-      const q = query(collection(db, 'banners'), orderBy('order'));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Banner));
+      const data = await bannerService.listAll();
       setBanners(data);
 
-      const batchSnap = await getDocs(collection(db, 'batches'));
-      setBatches(batchSnap.docs.map(d => ({ id: d.id, title: d.data().title })));
+      const batchSnap: any = await ApiService.get('/admin/data/batches');
+      setBatches((batchSnap?.data || batchSnap || []).map((d: any) => ({ id: d.id, title: d.title })));
 
-      const courseSnap = await getDocs(collection(db, 'courses'));
-      setCourses(courseSnap.docs.map(d => ({ id: d.id, title: d.data().title })));
+      const courseSnap: any = await ApiService.get('/admin/data/courses');
+      setCourses((courseSnap?.data || courseSnap || []).map((d: any) => ({ id: d.id, title: d.title })));
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
@@ -125,20 +116,18 @@ export default function BannersPage() {
         imageUrl: formData.imageUrl,
         routeName: finalRouteName,
         status: formData.status,
-        updatedBy: adminUser.email,
-        updatedAt: serverTimestamp(),
+        updatedBy: adminUser.email || 'admin',
       };
 
       if (editingBanner) {
-        await updateDoc(doc(db, 'banners', editingBanner.id), baseData);
+        await bannerService.update(editingBanner.id, baseData);
         toast.success('Banner updated successfully');
       } else {
         const order = banners.length > 0 ? Math.max(...banners.map(b => b.order)) + 1 : 1;
-        await addDoc(collection(db, 'banners'), {
+        await bannerService.create({
           ...baseData,
           order,
-          createdBy: adminUser.email,
-          createdAt: serverTimestamp(),
+          createdBy: adminUser.email || 'admin',
         });
         toast.success('Banner added successfully');
       }
@@ -157,7 +146,7 @@ export default function BannersPage() {
     if (!confirm('Are you sure you want to delete this banner?')) return;
     
     try {
-      await deleteDoc(doc(db, 'banners', id));
+      await bannerService.delete(id);
       toast.success('Banner deleted');
       fetchData();
     } catch (error) {
@@ -184,8 +173,8 @@ export default function BannersPage() {
 
     try {
       await Promise.all([
-        updateDoc(doc(db, 'banners', newBanners[index].id), { order: newBanners[index].order }),
-        updateDoc(doc(db, 'banners', newBanners[swapIndex].id), { order: newBanners[swapIndex].order })
+        bannerService.update(newBanners[index].id, { order: newBanners[index].order }),
+        bannerService.update(newBanners[swapIndex].id, { order: newBanners[swapIndex].order })
       ]);
     } catch (error) {
       console.error('Error updating order:', error);

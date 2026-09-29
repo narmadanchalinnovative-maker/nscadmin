@@ -148,19 +148,11 @@ export default function LiveClassesListPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => (item.isLive ? handleStop(item.id) : handleStart(item.id))}
-                          className={`px-3 py-1 rounded text-sm font-medium ${{ true: 'bg-red-600 text-white', false: 'bg-green-600 text-white' }[String(item.isLive)]}`}
+                          onClick={() => router.push(`/admin/live-classes/${item.id}/studio`)}
+                          className={`px-3 py-1 rounded text-sm font-medium ${item.isLive ? 'bg-red-600 text-white animate-pulse' : 'bg-green-600 text-white'}`}
                         >
-                          {item.isLive ? 'Stop' : 'Start'}
+                          {item.isLive ? 'Live Studio' : 'Start Studio'}
                         </button>
-                        {item.meetingUrl ? (
-                          <button
-                            onClick={() => joinZoom(item.meetingUrl!)}
-                            className="px-3 py-1 rounded bg-indigo-600 text-white text-sm font-medium"
-                          >
-                            Join
-                          </button>
-                        ) : null}
                         <button
                           onClick={() => handleDelete(item.id)}
                           className="p-2 hover:bg-red-100 text-red-600 rounded transition-colors"

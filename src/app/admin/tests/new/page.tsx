@@ -31,7 +31,7 @@ export default function CreateTestPage() {
         const res = await batchService.list(1, 100);
         if (!mounted) return;
         setBatchOptions(
-          res.data.map((batch) => ({
+          res.data.map((batch: any) => ({
             label: batch.title || 'Untitled',
             value: batch.id,
           }))

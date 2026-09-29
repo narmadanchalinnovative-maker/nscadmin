@@ -88,7 +88,6 @@ export default function EditLiveClassPage() {
 
     try {
       setSubmitting(true);
-      const { zoomMeetingId, zoomPassword } = extractZoomDetails(formData.meetingUrl || '');
       
       await liveClassService.update(
         liveClass.id,
@@ -96,13 +95,10 @@ export default function EditLiveClassPage() {
           title: formData.title,
           description: formData.description,
           startTime: formData.startTime ? new Date(formData.startTime) : undefined,
-          duration: formData.duration || undefined,
-          meetingUrl: formData.meetingUrl || '',
-          zoomMeetingId,
-          zoomPassword,
-          instructor: formData.instructor || '',
-          courseId: formData.courseId || '',
-          batchId: formData.batchId || '',
+          duration: formData.duration ? parseInt(formData.duration, 10) : undefined,
+          instructor: formData.instructor || undefined,
+          courseId: formData.courseId || undefined,
+          batchId: formData.batchId || undefined,
           status: formData.status,
         },
         adminUser.uid
@@ -144,7 +140,6 @@ export default function EditLiveClassPage() {
                 : new Date(liveClass.startTime as any).toISOString().slice(0, 16))
             : '',
           duration: liveClass.duration || '',
-          meetingUrl: liveClass.meetingUrl || '',
           instructor: liveClass.instructor || '',
           courseId: liveClass.courseId || '',
           batchId: liveClass.batchId || '',
@@ -159,7 +154,6 @@ export default function EditLiveClassPage() {
           { name: 'description', label: 'Description', type: 'textarea', required: true },
           { name: 'startTime', label: 'Start Time', type: 'datetime-local', required: false },
           { name: 'duration', label: 'Duration (minutes)', type: 'number', required: false },
-          { name: 'meetingUrl', label: 'Meeting URL', type: 'url', required: false },
           { name: 'instructor', label: 'Instructor', type: 'text', required: false },
           { 
             name: 'courseId', 

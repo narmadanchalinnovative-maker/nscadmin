@@ -32,12 +32,12 @@ export const liveClassService = {
     return toggleStatus(COLLECTION_NAME, id, currentStatus, userId);
   },
 
-  async list(page = 1, limit = 10, filters?: Record<string, any>) {
+  async list(page = 1, limit = 10, filters?: any) {
     return listDocuments<LiveClass>(
       COLLECTION_NAME,
       page,
       limit,
-      filters,
+      filters as any,
       'createdAt',
       'desc'
     );
@@ -48,15 +48,19 @@ export const liveClassService = {
   },
 
   async start(id: string, userId: string, meetingUrl?: string) {
+    const isInHouse = meetingUrl === 'in-house-stream';
     return updateDocument<LiveClass>(COLLECTION_NAME, id, {
+      status: 'live',
+      sessionType: isInHouse ? 'in-house-stream' : 'zoom',
       isLive: true,
-      meetingUrl: meetingUrl || '',
+      meetingUrl: isInHouse ? '' : (meetingUrl || ''),
       startTime: new Date(),
     }, userId);
   },
 
   async stop(id: string, userId: string, recordingUrl?: string) {
     return updateDocument<LiveClass>(COLLECTION_NAME, id, {
+      status: 'completed',
       isLive: false,
       recordingUrl: recordingUrl || '',
     }, userId);

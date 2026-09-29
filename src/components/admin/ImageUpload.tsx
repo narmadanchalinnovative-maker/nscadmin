@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
 import { UploadCloud, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -30,35 +28,33 @@ export function ImageUpload({ value, onChange, storagePath }: ImageUploadProps) 
       return;
     }
 
-    if (!storage) {
-      toast.error('Firebase storage is not initialized.');
-      return;
-    }
-
     setIsUploading(true);
-    setProgress(0);
+    setProgress(50); // Fake progress for now
 
-    const basePath = storagePath || 'uploads';
-    const storageRef = ref(storage, `${basePath}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://201.18.192.154:3001/api';
+      const response = await fetch(`${apiUrl}/video/upload-image`, {
+        method: 'POST',
+        body: formData,
+      });
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const p = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setProgress(p);
-      },
-      (error) => {
-        console.error('Upload error:', error);
-        toast.error('Failed to upload image.');
-        setIsUploading(false);
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        onChange(downloadURL);
-        setIsUploading(false);
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setProgress(100);
+        onChange(data.imageUrl);
+      } else {
+        throw new Error(data.error || 'Upload failed');
       }
-    );
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (

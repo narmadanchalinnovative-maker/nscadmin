@@ -1,64 +1,65 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth, db } from './firebase';
 import { AdminUser } from '@/types';
-import { getAdminUser } from './auth-guards';
+import { ApiService } from './api-service';
 
 interface AuthContextType {
-  user: User | null;
   adminUser: AdminUser | null;
   loading: boolean;
   isAdmin: boolean;
-  logout: () => Promise<void>;
+  login: (token: string, user: AdminUser) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
+    const verifyToken = async () => {
+      const token = ApiService.token;
+      if (token) {
         try {
-          const adminRecord = await getAdminUser(firebaseUser.uid, firebaseUser.email ?? undefined);
-          setAdminUser(adminRecord);
+          const res = await ApiService.get('/admin/me');
+          if (res.success && res.data) {
+            const user = res.data;
+            user.uid = user.id || user.uid;
+            setAdminUser(user);
+          } else {
+            setAdminUser(null);
+            localStorage.removeItem('admin_token');
+          }
         } catch (error) {
-          console.error('Error fetching admin user:', error);
+          console.error('Error verifying admin token:', error);
           setAdminUser(null);
         }
-      } else {
-        setUser(null);
-        setAdminUser(null);
       }
       setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    verifyToken();
   }, []);
 
-  const logout = async () => {
-    try {
-      await firebaseSignOut(auth);
-      setUser(null);
-      setAdminUser(null);
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
+  const login = (token: string, user: AdminUser) => {
+    localStorage.setItem('admin_token', token);
+    setAdminUser(user);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('admin_token');
+    setAdminUser(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
-        user,
         adminUser,
         loading,
-        isAdmin: adminUser !== null,
+        isAdmin: !!adminUser && (adminUser.role as string) !== 'student',
+        login,
         logout,
       }}
     >
@@ -67,10 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};

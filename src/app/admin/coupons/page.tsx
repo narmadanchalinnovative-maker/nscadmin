@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Plus, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { CouponForm } from '@/components/admin/coupons/CouponForm';
+import { couponService } from '@/lib/services/coupons';
 
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState<any[]>([]);
@@ -14,17 +13,21 @@ export default function CouponsPage() {
   const [editingCoupon, setEditingCoupon] = useState<any | null>(null);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'coupons'), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCoupons(data);
-      setLoading(false);
-    }, (error) => {
+    fetchCoupons();
+  }, []);
+
+  const fetchCoupons = async () => {
+    try {
+      setLoading(true);
+      const res = await couponService.listAll();
+      setCoupons(res);
+    } catch (error) {
       console.error('Error fetching coupons:', error);
       toast.error('Failed to fetch coupons');
+    } finally {
       setLoading(false);
-    });
-    return () => unsub();
-  }, []);
+    }
+  };
 
   const handleEdit = (coupon: any) => {
     setEditingCoupon(coupon);
@@ -33,8 +36,9 @@ export default function CouponsPage() {
 
   const handleToggleStatus = async (coupon: any) => {
     try {
-      await updateDoc(doc(db, 'coupons', coupon.id), { isActive: !coupon.isActive });
+      await couponService.update(coupon.id, { isActive: !coupon.isActive }, 'admin');
       toast.success(`Coupon ${coupon.id} is now ${!coupon.isActive ? 'Active' : 'Inactive'}`);
+      fetchCoupons();
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Failed to update status');
@@ -44,8 +48,9 @@ export default function CouponsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this coupon?')) return;
     try {
-      await deleteDoc(doc(db, 'coupons', id));
+      await couponService.delete(id);
       toast.success('Coupon deleted');
+      fetchCoupons();
     } catch (error) {
       console.error('Error deleting coupon:', error);
       toast.error('Failed to delete coupon');
@@ -69,7 +74,10 @@ export default function CouponsPage() {
         <div className="bg-white p-6 rounded-lg shadow">
           <CouponForm 
             initialData={editingCoupon} 
-            onClose={() => setIsFormOpen(false)} 
+            onClose={() => {
+              setIsFormOpen(false);
+              fetchCoupons();
+            }} 
           />
         </div>
       ) : (

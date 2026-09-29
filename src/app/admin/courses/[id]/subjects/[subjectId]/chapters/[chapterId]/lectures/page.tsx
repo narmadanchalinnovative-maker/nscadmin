@@ -86,10 +86,10 @@ export default function LecturesListPage() {
                       <h3 className="font-semibold text-lg text-gray-900">{lecture.title}</h3>
                       <p className="text-sm text-gray-600">{lecture.description}</p>
                       
-                                              {lecture.videoProcessingStatus === "processing" && (
-                          <TranscoderStatus videoUrl={lecture.videoUrl} />
+                      {(lecture.videoProcessingStatus === "PROCESSING" || lecture.videoProcessingStatus === "QUEUED") && (
+                          <TranscoderStatus lectureId={(lecture as any).id} />
                         )}
-                        {lecture.videoProcessingStatus === "error" && (
+                        {lecture.videoProcessingStatus === "ERROR" && (
                           <div className="mt-2 flex flex-col items-start gap-1">
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full max-w-max">
                               ❌ Video Processing Failed
@@ -102,7 +102,7 @@ export default function LecturesListPage() {
                             </button>
                           </div>
                         )}
-                      {lecture.videoProcessingStatus === 'ready' && (
+                      {lecture.videoProcessingStatus === 'COMPLETED' && (
                         <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full max-w-max">
                           ✅ Video Ready
                         </span>

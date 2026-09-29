@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+backend/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -42,3 +43,10 @@ next-env.d.ts
 
 # firebase
 .firebase/
+
+# sensitive config files
+src/google-services.json
+google-services.json
+
+# build artifacts
+tsconfig.tsbuildinfo
