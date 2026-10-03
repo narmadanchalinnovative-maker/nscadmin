@@ -28,7 +28,7 @@ export default function NotificationsPage() {
     setStatus({ type: null, msg: '' });
 
     try {
-      const API_BASE = 'http://201.18.192.154:5000/api';
+      const API_BASE = '/external-notifications';
       const response = await fetch(`${API_BASE}/admin/notifications/send`, {
         method: 'POST',
         headers: {

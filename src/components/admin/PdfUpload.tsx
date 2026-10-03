@@ -30,7 +30,7 @@ export function PdfUpload({ value, onChange, storagePath }: PdfUploadProps) {
       const formData = new FormData();
       formData.append('file', file);
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://201.18.192.154:3001/api';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/external-api';
       const response = await fetch(`${apiUrl}/video/upload-file`, {
         method: 'POST',
         body: formData,

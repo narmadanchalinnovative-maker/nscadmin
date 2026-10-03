@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://201.18.192.154:3001/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/external-api';
 
 export class ApiService {
   static get token() {

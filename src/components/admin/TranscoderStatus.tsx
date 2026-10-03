@@ -18,7 +18,7 @@ export function TranscoderStatus({ lectureId }: TranscoderStatusProps) {
     let socket: Socket;
 
     try {
-      socket = io(apiUrl);
+      socket = io();
       
       socket.on('transcode_progress', (data: { lectureId: string, percent: number, eta: string }) => {
         if (data.lectureId === lectureId) {

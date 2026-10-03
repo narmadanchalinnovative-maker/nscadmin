@@ -229,7 +229,7 @@ export default function LiveStudioPage() {
       });
 
       // 4. Send WHIP POST to MediaMTX
-      const response = await fetch(`http://201.18.192.154:8889/live_${id}/whip`, {
+      const response = await fetch(`/external-whip/live_${id}/whip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/sdp' },
         body: pc.localDescription?.sdp,

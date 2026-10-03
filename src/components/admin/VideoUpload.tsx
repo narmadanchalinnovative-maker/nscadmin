@@ -30,7 +30,7 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
       setEta('Starting upload...');
 
       // Upload directly to VPS Backend
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://201.18.192.154:3001/api';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/external-api';
       const formData = new FormData();
       formData.append('video', file);
 

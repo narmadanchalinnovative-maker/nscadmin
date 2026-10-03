@@ -9,7 +9,7 @@ export default function P2PNetworkPage() {
 
   useEffect(() => {
     // Connect to VPS backend Socket.io
-    const socket = io("http://201.18.192.154:3001");
+    const socket = io();
 
     socket.on("connect", () => {
       setConnected(true);
