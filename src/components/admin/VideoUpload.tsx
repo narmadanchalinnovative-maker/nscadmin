@@ -31,6 +31,7 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
 
       // Upload directly to VPS Backend
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/external-api';
+      console.log("Uploading to API URL:", apiUrl);
       const formData = new FormData();
       formData.append('video', file);
 
@@ -55,7 +56,7 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
                  setEta(`Upload ETA: ${Math.ceil(secondsRemaining)} secs`);
                }
             } else if (percentage === 100) {
-               setEta('Uploading to Cloudinary (Usually takes 5-15 seconds)...');
+               setEta('Processing on Server...');
             }
           }
         });
@@ -150,12 +151,12 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
                   <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
                   <span className="text-sm font-medium text-gray-700 mb-1">Uploading Video... {progress > 0 ? `${progress.toFixed(0)}%` : ''}</span>
                   {eta && <span className="text-xs font-semibold text-blue-600">{eta}</span>}
-                  <span className="text-xs text-gray-400 mt-2 text-center max-w-xs">Uploading to Cloudinary CDN for instant playback...</span>
+                  <span className="text-xs text-gray-400 mt-2 text-center max-w-xs">Uploading to server...</span>
                 </>
               ) : (
                 <>
                   <FileVideo className="w-8 h-8 text-gray-400 mb-2" />
-                  <span className="text-sm font-medium text-gray-600">Click or drag video to upload to Cloudinary</span>
+                  <span className="text-sm font-medium text-gray-600">Click or drag video to upload</span>
                   <span className="text-xs text-gray-400 mt-1">MP4, WebM, or OGG</span>
                 </>
               )}

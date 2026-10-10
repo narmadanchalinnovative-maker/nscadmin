@@ -26,9 +26,9 @@ export default function CoursesListPage() {
       setLoading(true);
       let result;
       if (searchTerm) {
-        result = await courseService.search(searchTerm, currentPage);
+        result = await courseService.search(searchTerm, currentPage, 5);
       } else {
-        result = await courseService.list(currentPage);
+        result = await courseService.list(currentPage, 5);
       }
       setData(result);
     } catch (error) {
