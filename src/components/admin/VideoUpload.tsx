@@ -10,6 +10,8 @@ interface VideoUploadProps {
   storagePath?: string;
 }
 
+const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks to stay well below Vercel's 4.5MB body limit
+
 export function VideoUpload({ value, onChange }: VideoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -27,90 +29,68 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
     try {
       setIsUploading(true);
       setProgress(0);
-      setEta('Starting upload...');
+      setEta('Starting chunked upload...');
 
-      // Upload directly to VPS Backend
+      // Upload chunked directly to VPS Backend via proxy
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/external-api';
-      console.log("Uploading to API URL:", apiUrl);
-      const formData = new FormData();
-      formData.append('video', file);
-
+      const uploadId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
       const startTime = Date.now();
 
-      const videoPath = await new Promise<string>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const percentage = Math.round((event.loaded / event.total) * 100);
-            setProgress(percentage);
+      let videoPath = '';
 
-            const timeElapsed = (Date.now() - startTime) / 1000; // seconds
-            if (timeElapsed > 1 && percentage < 100) {
-               const uploadSpeed = event.loaded / timeElapsed;
-               const bytesRemaining = event.total - event.loaded;
-               const secondsRemaining = Math.max(0, bytesRemaining / uploadSpeed);
-               
-               if (secondsRemaining > 60) {
-                 setEta(`Upload ETA: ${Math.ceil(secondsRemaining / 60)} mins`);
-               } else {
-                 setEta(`Upload ETA: ${Math.ceil(secondsRemaining)} secs`);
-               }
-            } else if (percentage === 100) {
-               setEta('Processing on Server...');
-            }
-          }
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(file.size, start + CHUNK_SIZE);
+        const chunk = file.slice(start, end);
+
+        const chunkFormData = new FormData();
+        chunkFormData.append('chunk', chunk, 'chunk.bin');
+        chunkFormData.append('uploadId', uploadId);
+        chunkFormData.append('chunkIndex', i.toString());
+        chunkFormData.append('totalChunks', totalChunks.toString());
+        chunkFormData.append('fileName', file.name);
+
+        const response = await fetch(`${apiUrl}/video/upload-chunk`, {
+          method: 'POST',
+          body: chunkFormData,
         });
 
-        // Set up a timer to show elapsed time while waiting for server response
-        let finalizeInterval: NodeJS.Timeout;
-        xhr.addEventListener('loadstart', () => {
-          finalizeInterval = setInterval(() => {
-            if (progress === 100) {
-              const elapsedFinalize = Math.floor((Date.now() - startTime) / 1000);
-              setEta(`Processing on Server... (${elapsedFinalize}s elapsed)`);
-            }
-          }, 1000);
-        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || `Upload failed at chunk ${i + 1}/${totalChunks} (status ${response.status})`);
+        }
 
-        xhr.addEventListener('load', () => {
-          clearInterval(finalizeInterval);
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              if (response.success && response.videoPath) {
-                resolve(response.videoPath);
-              } else {
-                reject(new Error(response.error || 'Upload failed'));
-              }
-            } catch (e) {
-              reject(new Error('Invalid response from server'));
-            }
+        const data = await response.json();
+        const currentProgress = Math.round(((i + 1) / totalChunks) * 100);
+        setProgress(currentProgress);
+
+        // Calculate speed & remaining ETA
+        const elapsedSec = (Date.now() - startTime) / 1000;
+        if (elapsedSec > 1 && i < totalChunks - 1) {
+          const bytesUploaded = end;
+          const bytesRemaining = file.size - bytesUploaded;
+          const uploadSpeed = bytesUploaded / elapsedSec;
+          const secRemaining = Math.max(0, bytesRemaining / uploadSpeed);
+
+          if (secRemaining > 60) {
+            setEta(`Chunk ${i + 1}/${totalChunks} (${currentProgress}%) • ETA: ${Math.ceil(secRemaining / 60)} mins`);
           } else {
-            try {
-              const errorResponse = JSON.parse(xhr.responseText);
-              reject(new Error(errorResponse.error || `Upload failed with status ${xhr.status}`));
-            } catch (e) {
-              reject(new Error(`Upload failed with status ${xhr.status}`));
-            }
+            setEta(`Chunk ${i + 1}/${totalChunks} (${currentProgress}%) • ETA: ${Math.ceil(secRemaining)} secs`);
           }
-        });
+        } else if (i === totalChunks - 1) {
+          setEta('Finalizing & processing on VPS...');
+        }
 
-        xhr.addEventListener('error', () => {
-          clearInterval(finalizeInterval);
-          reject(new Error('Network error during upload'));
-        });
-        
-        xhr.addEventListener('abort', () => {
-          clearInterval(finalizeInterval);
-          reject(new Error('Upload aborted'));
-        });
-        
-        xhr.open('POST', `${apiUrl}/video/upload`, true);
-        // Do NOT set Content-Type; browser will set multipart/form-data with the correct boundary
-        xhr.send(formData);
-      });
+        if (data.completed && data.videoPath) {
+          videoPath = data.videoPath;
+        }
+      }
 
-      // 3. Return the videoPath (filename) to the parent form
+      if (!videoPath) {
+        throw new Error('Server did not return a valid video path');
+      }
+
       onChange(videoPath);
       toast.success('Video uploaded successfully!');
     } catch (error: any) {
@@ -149,15 +129,15 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
               {isUploading ? (
                 <>
                   <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
-                  <span className="text-sm font-medium text-gray-700 mb-1">Uploading Video... {progress > 0 ? `${progress.toFixed(0)}%` : ''}</span>
+                  <span className="text-sm font-medium text-gray-700 mb-1">Uploading Video... {progress > 0 ? `${progress}%` : ''}</span>
                   {eta && <span className="text-xs font-semibold text-blue-600">{eta}</span>}
-                  <span className="text-xs text-gray-400 mt-2 text-center max-w-xs">Uploading to server...</span>
+                  <span className="text-xs text-gray-400 mt-2 text-center max-w-xs">Uploading directly to VPS in resilient chunks...</span>
                 </>
               ) : (
                 <>
                   <FileVideo className="w-8 h-8 text-gray-400 mb-2" />
-                  <span className="text-sm font-medium text-gray-600">Click or drag video to upload</span>
-                  <span className="text-xs text-gray-400 mt-1">MP4, WebM, or OGG</span>
+                  <span className="text-sm font-medium text-gray-600">Click or drag video to upload to VPS</span>
+                  <span className="text-xs text-gray-400 mt-1">MP4, WebM, or OGG (chunked upload supported)</span>
                 </>
               )}
             </div>
@@ -167,5 +147,3 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
     </div>
   );
 }
-
-

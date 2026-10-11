@@ -7,6 +7,7 @@ import { Plus, Pencil, Trash2, Loader2, ArrowUp, ArrowDown } from 'lucide-react'
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { bannerService, Banner } from '@/lib/services/banners';
 import { ApiService } from '@/lib/api-service';
+import { normalizeMediaUrl } from '@/lib/media';
 
 
 interface Batch {
@@ -230,7 +231,7 @@ export default function BannersPage() {
                 banners.map((banner, index) => (
                   <tr key={banner.id} className="hover:bg-gray-50 transition-colors">
                     <td className="p-4">
-                      <img src={banner.imageUrl} alt="Banner" className="w-32 h-16 object-cover rounded shadow-sm border border-gray-200" />
+                      <img src={normalizeMediaUrl(banner.imageUrl)} alt="Banner" className="w-32 h-16 object-cover rounded shadow-sm border border-gray-200" />
                     </td>
                     <td className="p-4">
                       <span className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">

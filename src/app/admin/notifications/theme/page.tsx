@@ -5,6 +5,7 @@ import { Save, Send, Loader2, AlertCircle, CheckCircle2, Smartphone, AppWindow, 
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, collection, addDoc, Timestamp } from 'firebase/firestore';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import { normalizeMediaUrl } from '@/lib/media';
 
 const DEFAULT_THEME = {
   // In-App Theme
@@ -413,7 +414,7 @@ export default function NotificationStudioPage() {
                     </div>
                     {imageUrl && (
                       <div className="w-14 h-14 rounded-xl bg-gray-800 overflow-hidden flex-shrink-0 shadow-md border border-gray-700/50">
-                        <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={normalizeMediaUrl(imageUrl)} alt="" className="w-full h-full object-cover" />
                       </div>
                     )}
                   </div>
@@ -515,7 +516,7 @@ function NotificationPreviewCard({ theme, title, message, time, iconColor, iconB
         
         {image && (
           <div className="mt-3 rounded-xl overflow-hidden h-32 w-full bg-gray-100 border border-black/5">
-            <img src={image} alt="" className="w-full h-full object-cover" />
+            <img src={normalizeMediaUrl(image)} alt="" className="w-full h-full object-cover" />
           </div>
         )}
 

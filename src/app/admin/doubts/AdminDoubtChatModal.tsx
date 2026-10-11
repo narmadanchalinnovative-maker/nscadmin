@@ -5,6 +5,7 @@ import { sendDoubtMessage, uploadChatMedia } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
 import { X, Send, Image as ImageIcon, Video, Loader2, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { normalizeMediaUrl } from '@/lib/media';
 
 interface Message {
   id: string;
@@ -120,13 +121,13 @@ export default function AdminDoubtChatModal({ doubt, onClose }: { doubt: any, on
                   <div className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${isAdmin ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-red-500 text-white rounded-tl-sm border border-red-600'}`}>
                     
                     {msg.mediaUrl && msg.mediaType === 'image' && (
-                      <a href={msg.mediaUrl} target="_blank" rel="noreferrer">
-                        <img src={msg.mediaUrl} alt="attachment" className="rounded-lg mb-2 max-h-48 object-cover" />
+                      <a href={normalizeMediaUrl(msg.mediaUrl)} target="_blank" rel="noreferrer">
+                        <img src={normalizeMediaUrl(msg.mediaUrl)} alt="attachment" className="rounded-lg mb-2 max-h-48 object-cover" />
                       </a>
                     )}
 
                     {msg.mediaUrl && msg.mediaType === 'video' && (
-                      <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="block relative bg-black rounded-lg mb-2 h-32 w-48 flex items-center justify-center hover:opacity-90 transition-opacity">
+                      <a href={normalizeMediaUrl(msg.mediaUrl)} target="_blank" rel="noreferrer" className="block relative bg-black rounded-lg mb-2 h-32 w-48 flex items-center justify-center hover:opacity-90 transition-opacity">
                         <PlayCircle className="w-10 h-10 text-white" />
                       </a>
                     )}

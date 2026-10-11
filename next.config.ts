@@ -34,6 +34,10 @@ const nextConfig: NextConfig = {
         destination: 'http://201.18.192.154:8889/:path*',
       },
       {
+        source: '/uploads/:path*',
+        destination: 'http://201.18.192.154:3001/uploads/:path*',
+      },
+      {
         source: '/socket.io/:path*',
         destination: 'http://201.18.192.154:3001/socket.io/:path*',
       },

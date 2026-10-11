@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { UploadCloud, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { normalizeMediaUrl } from '@/lib/media';
 
 interface ImageUploadProps {
   value?: string;
@@ -62,7 +63,7 @@ export function ImageUpload({ value, onChange, storagePath }: ImageUploadProps) 
       {value ? (
         <div className="relative inline-block">
           <img
-            src={value}
+            src={normalizeMediaUrl(value)}
             alt="Uploaded"
             className="h-32 w-auto object-cover rounded-lg border border-gray-200"
           />

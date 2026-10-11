@@ -114,9 +114,8 @@ export default function EditEventPage() {
           },
           {
             name: 'thumbnail',
-            label: 'Thumbnail URL',
-            type: 'url',
-            placeholder: 'https://example.com/image.jpg',
+            label: 'Event Thumbnail',
+            type: 'image',
             required: false,
           },
           {

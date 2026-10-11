@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { GripVertical, Plus, Trash2, Image as ImageIcon, Save, Smartphone } from 'lucide-react';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import { normalizeMediaUrl } from '@/lib/media';
 
 type BlockType = 'banner_carousel' | 'learning_cards' | 'quick_access' | 'custom_image' | 'spacer';
 
@@ -254,7 +255,7 @@ export default function HomeBuilderPage() {
                 {block.type === 'banner_carousel' && (
                   <div className="w-full h-32 rounded-xl flex items-center justify-center relative overflow-hidden bg-gray-100">
                     {liveBanners.length > 0 ? (
-                      <img src={liveBanners[0].imageUrl} alt="Banner" className="w-full h-full object-cover" />
+                      <img src={normalizeMediaUrl(liveBanners[0].imageUrl)} alt="Banner" className="w-full h-full object-cover" />
                     ) : (
                       <div className="text-gray-400 flex flex-col items-center"><ImageIcon size={24}/><span className="text-xs mt-1">Banners</span></div>
                     )}
@@ -266,7 +267,7 @@ export default function HomeBuilderPage() {
                     <div className="grid grid-cols-2 gap-2">
                       {liveSubjects.length > 0 ? liveSubjects.map(sub => (
                         <div key={sub.id} className="h-24 bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center p-2 text-center relative overflow-hidden">
-                          {sub.imageUrl ? <img src={sub.imageUrl} className="w-8 h-8 object-contain mb-1" /> : <div className="w-8 h-8 bg-blue-50 rounded-full mb-1"></div>}
+                          {sub.imageUrl ? <img src={normalizeMediaUrl(sub.imageUrl)} className="w-8 h-8 object-contain mb-1" /> : <div className="w-8 h-8 bg-blue-50 rounded-full mb-1"></div>}
                           <span className="text-[10px] font-medium text-gray-700 line-clamp-2">{sub.name || 'Subject'}</span>
                         </div>
                       )) : [1,2,3,4].map(i => (
@@ -296,7 +297,7 @@ export default function HomeBuilderPage() {
                 {block.type === 'custom_image' && (
                   <div className="w-full overflow-hidden rounded-xl bg-gray-100 flex items-center justify-center relative min-h-[100px]">
                     {block.imageUrl ? (
-                      <img src={block.imageUrl} alt="Custom" className="w-full h-auto object-cover" />
+                      <img src={normalizeMediaUrl(block.imageUrl)} alt="Custom" className="w-full h-auto object-cover" />
                     ) : (
                       <div className="py-8 flex flex-col items-center text-gray-400">
                         <ImageIcon size={24} className="mb-1" />

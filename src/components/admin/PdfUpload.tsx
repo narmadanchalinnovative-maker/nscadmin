@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { UploadCloud, Loader2, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { normalizeMediaUrl } from '@/lib/media';
 
 interface PdfUploadProps {
   value?: string;
@@ -56,7 +57,7 @@ export function PdfUpload({ value, onChange, storagePath }: PdfUploadProps) {
     <div className="w-full">
       {value ? (
         <div className="relative inline-block w-full">
-          <div className="flex items-center justify-center p-4 bg-gray-100 rounded-lg w-full h-32"><FileText className="w-10 h-10 text-red-500" /><a href={value} target="_blank" rel="noopener noreferrer" className="ml-3 font-medium text-blue-600 hover:underline">View Uploaded PDF</a></div>
+          <div className="flex items-center justify-center p-4 bg-gray-100 rounded-lg w-full h-32"><FileText className="w-10 h-10 text-red-500" /><a href={normalizeMediaUrl(value)} target="_blank" rel="noopener noreferrer" className="ml-3 font-medium text-blue-600 hover:underline">View Uploaded PDF</a></div>
           <button
             type="button"
             onClick={() => onChange('')}

@@ -30,9 +30,9 @@ export default function NewLecturePage() {
       const rawVideoKey = finalData.videoUploadUrl;
 
       if (rawVideoKey) {
-        finalData.videoProcessingStatus = 'QUEUED';
-        finalData.videoUrl = ''; // Backend will update this to the HLS URL when done
-        finalData.videoPath = rawVideoKey; // Pass this to trigger the transcode worker automatically
+        finalData.videoProcessingStatus = 'COMPLETED';
+        finalData.videoUrl = rawVideoKey;
+        finalData.videoPath = rawVideoKey;
         delete finalData.videoUploadUrl;
       }
 

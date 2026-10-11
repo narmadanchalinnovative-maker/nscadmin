@@ -5,6 +5,7 @@ import { Send, Loader2, AlertCircle, CheckCircle2, Smartphone, AppWindow, Bell }
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import { normalizeMediaUrl } from '@/lib/media';
 
 export default function NotificationsPage() {
   const [title, setTitle] = useState('');
@@ -256,7 +257,7 @@ export default function NotificationsPage() {
                       </div>
                       {imageUrl && (
                         <div className="w-14 h-14 rounded-lg bg-gray-800 overflow-hidden flex-shrink-0 shadow-sm border border-gray-700">
-                          <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                          <img src={normalizeMediaUrl(imageUrl)} alt="" className="w-full h-full object-cover" />
                         </div>
                       )}
                     </div>
@@ -281,7 +282,7 @@ export default function NotificationsPage() {
                       </p>
                       {imageUrl && (
                         <div className="mt-3 rounded-xl overflow-hidden h-36 w-full bg-gray-50 border border-gray-100">
-                          <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                          <img src={normalizeMediaUrl(imageUrl)} alt="" className="w-full h-full object-cover" />
                         </div>
                       )}
                       <p className="text-gray-400 text-[11px] mt-2.5 font-medium">Just now</p>

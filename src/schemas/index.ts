@@ -26,11 +26,11 @@ export const baseEntitySchema = z.object({
 });
 
 export const eventSchema = baseEntitySchema.extend({
-  thumbnail: z.string().url().optional(),
+  thumbnail: z.string().optional().or(z.literal('')),
 });
 
 export const batchSchema = baseEntitySchema.extend({
-  thumbnail: z.string().url().optional().or(z.literal('')),
+  thumbnail: z.string().optional().or(z.literal('')),
   language: z.string().optional(),
   mode: z.string().optional(),
   rating: z.string().optional(),
@@ -48,8 +48,8 @@ export const batchSchema = baseEntitySchema.extend({
 export const courseSchema = baseEntitySchema.extend({
   batchId: z.string().min(1, 'Batch is required'),
   price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
-  videoUrl: z.string().url().optional().or(z.literal('')),
-  pdfUrl: z.string().url().optional().or(z.literal('')),
+  videoUrl: z.string().optional().or(z.literal('')),
+  pdfUrl: z.string().optional().or(z.literal('')),
 });
 
 export const subjectSchema = baseEntitySchema.extend({
@@ -61,7 +61,7 @@ export const lectureSchema = baseEntitySchema.extend({
   courseId: z.string().min(1, 'Course is required'),
   subjectId: z.string().min(1, 'Subject is required'),
   chapterId: z.string().min(1, 'Chapter is required'),
-  videoUrl: z.string().url().optional().or(z.literal('')),
+  videoUrl: z.string().optional().or(z.literal('')),
   videoPath: z.string().optional().or(z.literal('')),
   order: z.number().optional(),
 });
@@ -108,14 +108,14 @@ export const appConfigSchema = z.object({
 export const createEventFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
-  thumbnail: z.string().url('Invalid URL').optional().or(z.literal('')),
+  thumbnail: z.string().optional().or(z.literal('')),
   status: statusSchema.default('active'),
 });
 
 export const createBatchFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(2000),
-  thumbnail: z.string().url('Invalid URL').optional().or(z.literal('')),
+  thumbnail: z.string().optional().or(z.literal('')),
   examGoalId: z.string().min(1, 'Exam Goal is required'),
   examGoalLabel: z.string().optional(),
   status: statusSchema.default('active'),
@@ -127,8 +127,8 @@ export const createCourseFormSchema = z.object({
   description: z.string().min(1, 'Description is required').max(2000),
   price: z.number().min(0, 'Price must be 0 or more').optional().default(0),
   status: statusSchema.default('active'),
-  videoUrl: z.string().url().optional().or(z.literal('')),
-  pdfUrl: z.string().url().optional().or(z.literal('')),
+  videoUrl: z.string().optional().or(z.literal('')),
+  pdfUrl: z.string().optional().or(z.literal('')),
 });
 
 export const createSubjectFormSchema = z.object({
@@ -152,10 +152,10 @@ export const createLectureFormSchema = z.object({
   subjectId: z.string().optional().nullable(),
   courseId: z.string().optional().nullable(),
   chapterId: z.string().optional().nullable(),
-  videoUrl: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
+  videoUrl: z.string().optional().nullable().or(z.literal('')),
   videoUploadUrl: z.string().optional().nullable().or(z.literal('')),
-  thumbnailUrl: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
-  pdfUrl: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
+  thumbnailUrl: z.string().optional().nullable().or(z.literal('')),
+  pdfUrl: z.string().optional().nullable().or(z.literal('')),
   status: z.enum(['active', 'inactive']).optional().nullable().default('active'),
 });
 
