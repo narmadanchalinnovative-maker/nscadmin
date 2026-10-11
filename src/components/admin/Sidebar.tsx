@@ -47,7 +47,6 @@ const menuItems = [
   { label: 'Banners', href: '/admin/banners', icon: ImageIcon },
   { label: 'Home Builder', href: '/admin/home-builder', icon: LayoutTemplate },
   { label: 'Storage Manager', href: '/admin/storage', icon: Database },
-  { label: 'Cloudinary Manager', href: '/admin/cloudinary', icon: Database },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Support Info', href: '/admin/support', icon: Headset },
   { label: 'Support Tickets', href: '/admin/support-tickets', icon: Ticket },
