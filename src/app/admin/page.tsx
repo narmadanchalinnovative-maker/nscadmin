@@ -28,7 +28,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [eventsData, batchesData, coursesData, testsData] = await Promise.all([
+        const [eventsRes, batchesRes, coursesRes, testsRes] = await Promise.allSettled([
           eventService.list(1, 1),
           batchService.list(1, 1),
           courseService.list(1, 1),
@@ -36,10 +36,10 @@ export default function DashboardPage() {
         ]);
 
         setStats({
-          events: eventsData.total,
-          batches: batchesData.total,
-          courses: coursesData.total,
-          tests: testsData.total,
+          events: eventsRes.status === 'fulfilled' ? (eventsRes.value?.total || 0) : 0,
+          batches: batchesRes.status === 'fulfilled' ? (batchesRes.value?.total || 0) : 0,
+          courses: coursesRes.status === 'fulfilled' ? (coursesRes.value?.total || 0) : 0,
+          tests: testsRes.status === 'fulfilled' ? (testsRes.value?.total || 0) : 0,
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -123,7 +123,7 @@ export default function DashboardPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-300 mt-1">✓</span>
-              <span>Real-time Firestore synchronization</span>
+              <span>Real-time PostgreSQL synchronization</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-300 mt-1">✓</span>
