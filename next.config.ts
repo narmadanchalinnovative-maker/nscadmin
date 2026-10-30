@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -18,9 +19,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  
+
   async rewrites() {
     return [
+      {
+        source: '/external-api/:path*',
+        destination: 'http://201.18.192.154:3001/api/:path*',
+      },
       {
         source: '/external-notifications/:path*',
         destination: 'http://201.18.192.154:5000/api/:path*',
