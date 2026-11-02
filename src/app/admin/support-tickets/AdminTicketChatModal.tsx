@@ -27,19 +27,29 @@ export default function AdminTicketChatModal({ ticket, onClose }: { ticket: any,
   const [isVideo, setIsVideo] = useState(false);
 
   useEffect(() => {
-    if (!ticket?.id) return;
-    updateDoc(doc(db, 'support_tickets', ticket.id), { hasUnreadAdmin: false }).catch(console.error);
-    const q = query(
-      collection(db, 'support_tickets', ticket.id, 'messages'),
-      orderBy('createdAt', 'asc')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)));
-      setTimeout(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }, 100);
-    });
-    return () => unsubscribe();
+    if (!db || !ticket?.id) return;
+    try {
+      updateDoc(doc(db, 'support_tickets', ticket.id), { hasUnreadAdmin: false }).catch(console.error);
+      const q = query(
+        collection(db, 'support_tickets', ticket.id, 'messages'),
+        orderBy('createdAt', 'asc')
+      );
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          setMessages((snapshot?.docs || []).map((doc) => ({ id: doc.id, ...doc.data() } as Message)));
+          setTimeout(() => {
+            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+          }, 100);
+        },
+        (error) => {
+          console.warn('Support ticket onSnapshot warning:', error);
+        }
+      );
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Support ticket listener setup warning:', e);
+    }
   }, [ticket?.id]);
 
   const handleSend = async (e?: React.FormEvent) => {

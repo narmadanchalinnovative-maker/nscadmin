@@ -27,19 +27,29 @@ export default function AdminDoubtChatModal({ doubt, onClose }: { doubt: any, on
   const [isVideo, setIsVideo] = useState(false);
 
   useEffect(() => {
-    if (!doubt?.id) return;
-    updateDoc(doc(db, 'doubts', doubt.id), { hasUnreadAdmin: false }).catch(console.error);
-    const q = query(
-      collection(db, 'doubts', doubt.id, 'messages'),
-      orderBy('createdAt', 'asc')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)));
-      setTimeout(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }, 100);
-    });
-    return () => unsubscribe();
+    if (!db || !doubt?.id) return;
+    try {
+      updateDoc(doc(db, 'doubts', doubt.id), { hasUnreadAdmin: false }).catch(console.error);
+      const q = query(
+        collection(db, 'doubts', doubt.id, 'messages'),
+        orderBy('createdAt', 'asc')
+      );
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          setMessages((snapshot?.docs || []).map((doc) => ({ id: doc.id, ...doc.data() } as Message)));
+          setTimeout(() => {
+            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+          }, 100);
+        },
+        (error) => {
+          console.warn('Doubt chat onSnapshot warning:', error);
+        }
+      );
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Doubt chat listener setup warning:', e);
+    }
   }, [doubt?.id]);
 
   const handleSend = async (e?: React.FormEvent) => {

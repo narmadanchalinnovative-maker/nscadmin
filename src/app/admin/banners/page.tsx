@@ -46,10 +46,12 @@ export default function BannersPage() {
       setBanners(data);
 
       const batchSnap: any = await ApiService.get('/admin/data/batches');
-      setBatches((batchSnap?.data || batchSnap || []).map((d: any) => ({ id: d.id, title: d.title })));
+      const batchList = Array.isArray(batchSnap?.data) ? batchSnap.data : (Array.isArray(batchSnap) ? batchSnap : []);
+      setBatches(batchList.map((d: any) => ({ id: d?.id, title: d?.title || 'Untitled' })));
 
       const courseSnap: any = await ApiService.get('/admin/data/courses');
-      setCourses((courseSnap?.data || courseSnap || []).map((d: any) => ({ id: d.id, title: d.title })));
+      const courseList = Array.isArray(courseSnap?.data) ? courseSnap.data : (Array.isArray(courseSnap) ? courseSnap : []);
+      setCourses(courseList.map((d: any) => ({ id: d?.id, title: d?.title || 'Untitled' })));
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');

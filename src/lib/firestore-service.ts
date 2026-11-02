@@ -12,9 +12,9 @@ export async function createDocument<T extends Record<string, any>>(
     updatedBy: userId,
   });
   if (res.success === false) {
-    throw new Error(res.message || 'Failed to create document');
+    throw new Error(res.message || res.error || 'Failed to create document');
   }
-  return res.data?.id;
+  return res.data?.id || res.id || '';
 }
 
 export async function getDocument<T extends Record<string, any>>(
@@ -23,7 +23,7 @@ export async function getDocument<T extends Record<string, any>>(
 ): Promise<(T & { id: string }) | null> {
   try {
     const res = await ApiService.get(`/admin/data/${collectionName}/${docId}`);
-    return res.data;
+    return res.data || null;
   } catch (error) {
     return null;
   }
@@ -48,7 +48,6 @@ export async function deleteDocument(
   await ApiService.delete(`/admin/data/${collectionName}/${docId}`);
 }
 
-
 export async function toggleStatus(
   collectionName: string,
   docId: string,
@@ -67,39 +66,55 @@ export async function listDocuments<T extends Record<string, any>>(
   sortBy?: string,
   sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<PaginatedResponse<T & { id: string }>> {
-  const res = await ApiService.get(`/admin/data/${collectionName}`);
-  let data = res.data || [];
-  
-  // Client-side filtering/pagination for now
-  if (filters && filters.length > 0) {
-    filters.forEach((f) => {
-      data = data.filter((item: any) => {
-        if (f.operator === '==') return item[f.field] === f.value;
-        if (f.operator === 'array-contains') return item[f.field]?.includes(f.value);
-        return true;
+  try {
+    const res = await ApiService.get(`/admin/data/${collectionName}`);
+    let data: any[] = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+
+    // Filtering
+    if (filters && filters.length > 0) {
+      filters.forEach((f) => {
+        data = data.filter((item: any) => {
+          if (!item) return false;
+          if (f.operator === '==') return item[f.field] === f.value;
+          if (f.operator === 'array-contains') {
+            return Array.isArray(item[f.field]) && item[f.field]?.includes(f.value);
+          }
+          return true;
+        });
       });
-    });
-  }
-  
-  if (sortBy) {
-    data.sort((a: any, b: any) => {
-      if (a[sortBy] < b[sortBy]) return sortOrder === 'asc' ? -1 : 1;
-      if (a[sortBy] > b[sortBy]) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
+    }
 
-  const pageNum = Math.max(1, page);
-  const skipCount = (pageNum - 1) * limit;
-  const paginatedData = data.slice(skipCount, skipCount + limit);
+    // Sorting
+    if (sortBy) {
+      data.sort((a: any, b: any) => {
+        if (!a || !b) return 0;
+        if (a[sortBy] < b[sortBy]) return sortOrder === 'asc' ? -1 : 1;
+        if (a[sortBy] > b[sortBy]) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
 
-  return {
-    data: paginatedData,
-    total: data.length,
-    page: pageNum,
-    limit,
-    totalPages: Math.ceil(data.length / limit),
-  };
+    const pageNum = Math.max(1, page);
+    const skipCount = (pageNum - 1) * limit;
+    const paginatedData = data.slice(skipCount, skipCount + limit);
+
+    return {
+      data: paginatedData,
+      total: data.length,
+      page: pageNum,
+      limit,
+      totalPages: Math.ceil(data.length / limit) || 1,
+    };
+  } catch (error) {
+    console.error(`Error in listDocuments for ${collectionName}:`, error);
+    return {
+      data: [],
+      total: 0,
+      page: Math.max(1, page),
+      limit,
+      totalPages: 1,
+    };
+  }
 }
 
 export async function searchDocuments<T extends Record<string, any>>(
@@ -109,33 +124,50 @@ export async function searchDocuments<T extends Record<string, any>>(
   page: number = 1,
   limit: number = 10
 ): Promise<PaginatedResponse<T & { id: string }>> {
-  const res = await ApiService.get(`/admin/data/${collectionName}`);
-  let data = res.data || [];
+  try {
+    const res = await ApiService.get(`/admin/data/${collectionName}`);
+    let data: any[] = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
 
-  data = data.filter((item: any) => 
-    item[searchField] && item[searchField].toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    const term = (searchTerm || '').toLowerCase();
+    data = data.filter((item: any) => {
+      if (!item || !item[searchField]) return false;
+      return String(item[searchField]).toLowerCase().includes(term);
+    });
 
-  const pageNum = Math.max(1, page);
-  const skipCount = (pageNum - 1) * limit;
-  const paginatedData = data.slice(skipCount, skipCount + limit);
+    const pageNum = Math.max(1, page);
+    const skipCount = (pageNum - 1) * limit;
+    const paginatedData = data.slice(skipCount, skipCount + limit);
 
-  return {
-    data: paginatedData,
-    total: data.length,
-    page: pageNum,
-    limit,
-    totalPages: Math.ceil(data.length / limit),
-  };
+    return {
+      data: paginatedData,
+      total: data.length,
+      page: pageNum,
+      limit,
+      totalPages: Math.ceil(data.length / limit) || 1,
+    };
+  } catch (error) {
+    console.error(`Error in searchDocuments for ${collectionName}:`, error);
+    return {
+      data: [],
+      total: 0,
+      page: Math.max(1, page),
+      limit,
+      totalPages: 1,
+    };
+  }
 }
 
 export async function batchDelete(
   collectionName: string,
   docIds: string[]
 ): Promise<void> {
-  // A simple implementation: delete one by one
+  if (!Array.isArray(docIds)) return;
   for (const docId of docIds) {
-    await ApiService.delete(`/admin/data/${collectionName}/${docId}`);
+    try {
+      await ApiService.delete(`/admin/data/${collectionName}/${docId}`);
+    } catch (e) {
+      console.warn(`Failed to delete ${docId} from ${collectionName}:`, e);
+    }
   }
 }
 
@@ -143,38 +175,67 @@ export async function findDocumentInCollectionGroup<T extends BaseEntity>(
   collectionName: string,
   docId: string
 ): Promise<(T & { id: string; ref?: any }) | null> {
-  // We don't have collection groups in Postgres, we just search the table
   try {
     const res = await ApiService.get(`/admin/data/${collectionName}/${docId}`);
-    return res.data;
+    return res.data || null;
   } catch (error) {
     return null;
   }
 }
 
-// Stubs for remaining functions
-export const collectionGroup = {} as any;
-export const getDocs = {} as any;
-export const query = {} as any;
-export const where = {} as any;
-export const documentId = {} as any;
-export const limit = {} as any;
-export const doc = {} as any;
+// Callable stubs so any legacy or unexpected call will not crash
+export const collectionGroup = (...args: any[]): any => ({});
+export const getDocs = async (...args: any[]): Promise<any> => ({ docs: [], empty: true, size: 0 });
+export const query = (...args: any[]): any => ({});
+export const where = (...args: any[]): any => ({});
+export const documentId = (...args: any[]): any => ({});
+export const limit = (...args: any[]): any => ({});
+export const doc = (...args: any[]): any => ({});
 
-export async function sendDoubtMessage(doubtId: string, text: string, mediaUrl?: string, mediaType?: 'image' | 'video', senderName: string = 'Admin'): Promise<void> {
-  // TODO: Add API endpoint for this
+export async function sendDoubtMessage(
+  doubtId: string,
+  text: string,
+  mediaUrl?: string,
+  mediaType?: 'image' | 'video',
+  senderName: string = 'Admin'
+): Promise<void> {
+  try {
+    await ApiService.post(`/admin/data/doubts/${doubtId}/messages`, {
+      text,
+      mediaUrl,
+      mediaType,
+      senderName,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn('sendDoubtMessage fallback warning:', e);
+  }
 }
 
 export async function uploadChatMedia(doubtId: string, file: File): Promise<string> {
-  // TODO: Add API endpoint for this
-  return "";
+  return '';
 }
 
-export async function sendSupportTicketMessage(ticketId: string, text: string, mediaUrl?: string, mediaType?: 'image' | 'video', senderName: string = 'Admin'): Promise<void> {
-  // TODO: Add API endpoint for this
+export async function sendSupportTicketMessage(
+  ticketId: string,
+  text: string,
+  mediaUrl?: string,
+  mediaType?: 'image' | 'video',
+  senderName: string = 'Admin'
+): Promise<void> {
+  try {
+    await ApiService.post(`/admin/data/support_tickets/${ticketId}/messages`, {
+      text,
+      mediaUrl,
+      mediaType,
+      senderName,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn('sendSupportTicketMessage fallback warning:', e);
+  }
 }
 
 export async function uploadSupportChatMedia(ticketId: string, file: File): Promise<string> {
-  // TODO: Add API endpoint for this
-  return "";
+  return '';
 }

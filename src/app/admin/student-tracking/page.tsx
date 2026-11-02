@@ -65,12 +65,19 @@ export default function StudentTrackingPage() {
         if (data.isOnline) status = 'active';
         if (data.isUninstalled) status = 'uninstalled';
 
+        const parseDate = (d: any) => {
+          if (!d) return undefined;
+          if (typeof d?.toDate === 'function') return d.toDate();
+          const parsed = new Date(d);
+          return isNaN(parsed.getTime()) ? undefined : parsed;
+        };
+
         students.push({
           id: doc.id,
           phoneNumber: data.phoneNumber || 'N/A',
           name: data.displayName || data.name || 'Unknown',
           status,
-          lastActive: data.lastLogin?.toDate() || data.lastActive?.toDate(),
+          lastActive: parseDate(data.lastLogin) || parseDate(data.lastActive),
         });
       });
       setRecentStudents(students);

@@ -115,7 +115,7 @@ export default function LiveClassesListPage() {
               <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full"></div>
             </div>
           </div>
-        ) : data && data.data.length > 0 ? (
+        ) : data && Array.isArray(data.data) && data.data.length > 0 ? (
           <div className="overflow-hidden rounded-lg border border-gray-200">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -129,7 +129,7 @@ export default function LiveClassesListPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {data.data.map((item) => (
+                {(data.data || []).map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.title}</td>
                     <td className="px-6 py-4 text-sm text-gray-600 line-clamp-2">

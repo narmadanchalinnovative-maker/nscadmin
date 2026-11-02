@@ -35,7 +35,9 @@ export function DataTable<T extends Record<string, any>>({
     );
   }
 
-  if (data.data.length === 0) {
+  const items = Array.isArray(data?.data) ? data.data : [];
+
+  if (items.length === 0) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-lg">
         <p className="text-gray-600">No items found</p>
@@ -56,7 +58,7 @@ export function DataTable<T extends Record<string, any>>({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
-          {data.data.map((item) => (
+          {items.map((item) => (
             <tr key={item.id} className="hover:bg-gray-50 transition-colors">
               <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.title || (item as any).label}</td>
               <td className="px-6 py-4 text-sm text-gray-600 line-clamp-2">

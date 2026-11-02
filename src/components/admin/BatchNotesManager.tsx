@@ -38,23 +38,38 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
-    if (!batchId) return;
-
-    const q = query(
-      collection(db, `batches/${batchId}/notes`),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedNotes = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Note[];
-      setNotes(fetchedNotes);
+    if (!db || !batchId) {
       setLoading(false);
-    });
+      return;
+    }
 
-    return () => unsubscribe();
+    try {
+      const q = query(
+        collection(db, `batches/${batchId}/notes`),
+        orderBy('createdAt', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const fetchedNotes = (snapshot?.docs || []).map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Note[];
+          setNotes(fetchedNotes);
+          setLoading(false);
+        },
+        (error) => {
+          console.warn('BatchNotesManager onSnapshot warning:', error);
+          setLoading(false);
+        }
+      );
+
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('BatchNotesManager listener setup error:', e);
+      setLoading(false);
+    }
   }, [batchId]);
 
   const handleUpload = async (e: React.FormEvent) => {

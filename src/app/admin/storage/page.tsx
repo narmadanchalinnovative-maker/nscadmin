@@ -41,8 +41,8 @@ export default function StorageManagerPage() {
       setIsLoading(true);
       const res = await ApiService.get('/admin/storage');
       if (res.success) {
-        setStats(res.stats);
-        setFiles(res.files);
+        setStats(res.stats || null);
+        setFiles(Array.isArray(res.files) ? res.files : []);
         setSelectedFiles(new Set()); // clear selections on refresh
       }
     } catch (error) {

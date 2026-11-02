@@ -5,16 +5,20 @@ const nextConfig: NextConfig = {
   // Vercel optimizations
   reactStrictMode: true,
 
-  // Skip TypeScript errors during build (useful for initial deployment)
+  // Skip TypeScript errors during build for bulletproof deployment
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // Image optimization for external sources if needed
+  // Image optimization for external sources
   images: {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
         hostname: "**",
       },
     ],

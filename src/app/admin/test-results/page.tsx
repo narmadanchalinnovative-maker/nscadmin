@@ -81,7 +81,7 @@ export default function TestResultsPage() {
             <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full"></div>
           </div>
         </div>
-      ) : data?.data.length === 0 ? (
+      ) : (!data?.data || data.data.length === 0) ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
           <p className="text-gray-600">No test results found</p>
         </div>
@@ -99,7 +99,7 @@ export default function TestResultsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {data?.data.map((item) => (
+                {(data?.data || []).map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">{item.userName || '-'}</div>
