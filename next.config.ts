@@ -27,10 +27,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/external-notifications/:path*',
-        destination: 'http://201.18.192.154:5000/api/:path*',
-      },
-      {
         source: '/external-whip/:path*',
         destination: 'http://201.18.192.154:8889/:path*',
       },
