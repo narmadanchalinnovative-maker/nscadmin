@@ -93,7 +93,7 @@ export default function EditLecturePage() {
       await lectureService.update(lecture.id, {
         title: formData.title,
         description: formData.description,
-        status: formData.status,
+        status: (formData.status || 'active') as 'active' | 'inactive',
         videoUrl: finalVideoUrl || '',
         videoPath: videoPath || '',
       }, adminUser.uid);

@@ -69,7 +69,7 @@ export default function CreateLecturePage() {
 
           // Update the lecture with the file URL
           await lectureService.update(newLectureId, { 
-            videoUrl: finalVideoUrl,
+            videoUrl: finalVideoUrl || '',
             videoPath: videoPath 
           }, adminUser.uid);
           

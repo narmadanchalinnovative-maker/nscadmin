@@ -26,7 +26,8 @@ export interface Event extends BaseEntity {
   thumbnail?: string;
 }
 
-export interface LiveClass extends BaseEntity {
+export interface LiveClass extends Omit<BaseEntity, 'status'> {
+  status?: 'active' | 'inactive' | 'live' | 'completed';
   startTime?: Date;
   duration?: number; // in minutes
   meetingUrl?: string;
