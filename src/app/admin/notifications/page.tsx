@@ -16,19 +16,6 @@ export default function NotificationsPage() {
   const [sendInApp, setSendInApp] = useState(true);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null; msg: string; notice?: string }>({ type: null, msg: '' });
-  const [fcmStatus, setFcmStatus] = useState<{ checked: boolean; configured: boolean; projectId?: string }>({ checked: false, configured: false });
-  const [showSetupModal, setShowSetupModal] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/admin/notifications/send')
-      .then(res => res.json())
-      .then(data => {
-        setFcmStatus({ checked: true, configured: !!data.fcmConfigured, projectId: data.projectId });
-      })
-      .catch(() => {
-        setFcmStatus({ checked: true, configured: false });
-      });
-  }, []);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,34 +29,48 @@ export default function NotificationsPage() {
     setStatus({ type: null, msg: '' });
 
     try {
-      const response = await fetch('/api/admin/notifications/send', {
+      const payload = {
+        title,
+        message,
+        imageUrl,
+        targetScreen,
+        sendPush,
+        sendInApp,
+        topic: 'all_users',
+      };
+
+      // 1. Send to VPS Backend API (saves to PostgreSQL & broadcasts)
+      let res = await fetch('/external-api/admin/notifications/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('adminToken') || ''}`
         },
-        body: JSON.stringify({
-          title,
-          message,
-          imageUrl,
-          targetScreen,
-          sendPush,
-          sendInApp,
-          topic: 'all_users'
-        })
+        body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      // 2. Fallback to Next.js API route if needed
+      if (!res.ok) {
+        res = await fetch('/api/admin/notifications/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('adminToken') || ''}`
+          },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      const data = await res.json();
       if (!data.success) {
         throw new Error(data.message || 'Failed to send notification');
       }
 
       setStatus({ 
         type: 'success', 
-        msg: data.message || 'Notification published successfully!',
-        notice: data.data?.requiresServiceAccount 
-          ? 'In-app notification saved! To enable instant FCM lock-screen push notifications, add your Firebase Service Account key in environment variables.'
-          : undefined
+        msg: data.pushSent || data.data?.pushSent
+          ? 'Notification saved to SQL Database & Push delivered to devices!'
+          : 'Notification saved to SQL Database (PostgreSQL) successfully!'
       });
       setTitle('');
       setMessage('');
@@ -77,35 +78,7 @@ export default function NotificationsPage() {
       setTargetScreen('');
     } catch (error: any) {
       console.error('Error sending notification:', error);
-      // Fallback: Try saving directly to Firestore from the client
-      try {
-        await addDoc(collection(db, 'notifications'), {
-          title,
-          message,
-          imageUrl: imageUrl || '',
-          targetScreen: targetScreen || '',
-          route: targetScreen || '',
-          icon: 'notifications_none_rounded',
-          iconColor: 0xFF176CAB,
-          backgroundColor: 0xFFEAF6FF,
-          sendPush,
-          sendInApp,
-          topic: 'all_users',
-          createdAt: serverTimestamp(),
-          time: serverTimestamp(),
-          source: 'admin_direct',
-        });
-        setStatus({
-          type: 'success',
-          msg: 'Notification published directly to Firebase Firestore! (In-app stream active)'
-        });
-        setTitle('');
-        setMessage('');
-        setImageUrl('');
-        setTargetScreen('');
-      } catch (clientErr: any) {
-        setStatus({ type: 'error', msg: error.message || clientErr.message || 'Failed to send notification.' });
-      }
+      setStatus({ type: 'error', msg: error.message || 'Failed to send notification.' });
     } finally {
       setLoading(false);
     }
@@ -117,35 +90,14 @@ export default function NotificationsPage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold text-gray-900">Push Notifications</h1>
-            {fcmStatus.checked && (
-              fcmStatus.configured ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  FCM Push Active
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowSetupModal(true)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200 transition-colors cursor-pointer"
-                >
-                  <Info className="w-3.5 h-3.5 text-amber-600" />
-                  FCM Setup Guide
-                </button>
-              )
-            )}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              VPS SQL Backend
+            </span>
           </div>
-          <p className="text-gray-600 mt-1">Draft and preview your notifications in real-time before sending to Firebase & mobile apps.</p>
+          <p className="text-gray-600 mt-1">Send notifications directly through your VPS PostgreSQL database & dispatch to all mobile devices.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowSetupModal(true)}
-            className="flex items-center gap-1.5 bg-gray-50 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors border border-gray-200 text-sm font-medium"
-          >
-            <HelpCircle className="w-4 h-4 text-gray-500" />
-            FCM Config
-          </button>
           <a 
             href="/admin/notifications/theme" 
             className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-md hover:bg-indigo-100 transition-colors border border-indigo-200 text-sm font-medium"
@@ -155,60 +107,6 @@ export default function NotificationsPage() {
           </a>
         </div>
       </div>
-
-      {showSetupModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl max-w-xl w-full p-6 shadow-2xl border border-gray-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Smartphone className="w-5 h-5 text-blue-600" />
-                  Firebase Cloud Messaging (FCM) Setup
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  How push notifications work with your project ({fcmStatus.projectId || 'narmadanchalsmartclassess'})
-                </p>
-              </div>
-              <button 
-                type="button" 
-                onClick={() => setShowSetupModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 leading-none"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3 text-sm text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="font-semibold text-gray-900">What is already working:</p>
-              <ul className="list-disc list-inside space-y-1 text-xs text-gray-600">
-                <li><strong className="text-gray-800">In-App Notifications:</strong> Real-time streaming to the Flutter mobile app via Firestore & VPS database.</li>
-                <li><strong className="text-gray-800">Firestore Dispatch:</strong> Every notification is automatically written to the Firestore collection with theme styling.</li>
-              </ul>
-
-              <p className="font-semibold text-gray-900 pt-2">To enable instant lock-screen device push notifications:</p>
-              <ol className="list-decimal list-inside space-y-1.5 text-xs text-gray-600">
-                <li>Open <a href="https://console.firebase.google.com/project/narmadanchalsmartclassess/settings/serviceaccounts/adminsdk" target="_blank" rel="noreferrer" className="text-blue-600 underline font-medium">Firebase Console &rarr; Project Settings &rarr; Service Accounts</a>.</li>
-                <li>Click <strong>&quot;Generate new private key&quot;</strong> and download the JSON file.</li>
-                <li>Add it to your Vercel / environment variables as:
-                  <div className="mt-1.5 p-2 bg-slate-900 text-slate-100 rounded font-mono text-[11px] overflow-x-auto select-all">
-                    FIREBASE_SERVICE_ACCOUNT_KEY=&apos;{`{"type":"service_account","project_id":"narmadanchalsmartclassess",...}`}&apos;
-                  </div>
-                </li>
-              </ol>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setShowSetupModal(false)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-              >
-                Got It
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* LEFT COLUMN: FORM */}
