@@ -1,8 +1,12 @@
 function getApiBase(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
   if (typeof window !== 'undefined') {
+    // If the browser is on HTTPS and NEXT_PUBLIC_API_URL is insecure HTTP, use /external-api to avoid mixed content blocking
+    if (window.location.protocol === 'https:' && process.env.NEXT_PUBLIC_API_URL?.startsWith('http://')) {
+      return '/external-api';
+    }
+    if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.startsWith('http://')) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
     return '/external-api';
   }
   // Server-side base URL resolution
@@ -77,6 +81,9 @@ export class ApiService {
       });
       try {
         const json = await res.json();
+        if (!res.ok && json.success === undefined) {
+          return { success: false, status: res.status, ...json };
+        }
         return json;
       } catch (e) {
         return { success: res.ok, status: res.status };
@@ -96,6 +103,9 @@ export class ApiService {
       });
       try {
         const json = await res.json();
+        if (!res.ok && json.success === undefined) {
+          return { success: false, status: res.status, ...json };
+        }
         return json;
       } catch (e) {
         return { success: res.ok, status: res.status };
@@ -115,6 +125,9 @@ export class ApiService {
       });
       try {
         const json = await res.json();
+        if (!res.ok && json.success === undefined) {
+          return { success: false, status: res.status, ...json };
+        }
         return json;
       } catch (e) {
         return { success: res.ok, status: res.status };

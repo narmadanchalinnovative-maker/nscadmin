@@ -6,15 +6,23 @@ export async function createDocument<T extends Record<string, any>>(
   data: Omit<T, 'id'>,
   userId: string
 ): Promise<string> {
-  const res = await ApiService.post(`/admin/data/${collectionName}`, {
-    ...data,
-    createdBy: userId,
-    updatedBy: userId,
-  });
+  const payload: any = { ...data };
+  delete payload.id;
+  // Tests model in VPS Prisma schema does not have createdBy/updatedBy columns
+  if (collectionName !== 'tests') {
+    payload.createdBy = userId;
+    payload.updatedBy = userId;
+  }
+
+  const res = await ApiService.post(`/admin/data/${collectionName}`, payload);
   if (res.success === false) {
     throw new Error(res.message || res.error || 'Failed to create document');
   }
-  return res.data?.id || res.id || '';
+  const id = res.data?.id || res.id || (typeof res === 'string' ? res : '');
+  if (!id) {
+    throw new Error(res.message || res.error || 'Failed to create document: No ID returned');
+  }
+  return String(id);
 }
 
 export async function getDocument<T extends Record<string, any>>(
@@ -35,10 +43,15 @@ export async function updateDocument<T extends Record<string, any>>(
   data: Partial<T>,
   userId: string
 ): Promise<void> {
-  await ApiService.put(`/admin/data/${collectionName}/${docId}`, {
-    ...data,
-    updatedBy: userId,
-  });
+  const payload: any = { ...data };
+  delete payload.id;
+  if (collectionName !== 'tests') {
+    payload.updatedBy = userId;
+  }
+  const res = await ApiService.put(`/admin/data/${collectionName}/${docId}`, payload);
+  if (res?.success === false) {
+    throw new Error(res.message || res.error || 'Failed to update document');
+  }
 }
 
 export async function deleteDocument(

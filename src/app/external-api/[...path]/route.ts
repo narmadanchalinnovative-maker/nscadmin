@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const TARGET_HOST = 'http://201.18.192.154:3001';
+const RAW_TARGET = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://201.18.192.154:3001';
+const TARGET_HOST = RAW_TARGET.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
 async function handleProxy(req: NextRequest) {
   const subpath = req.nextUrl.pathname.replace(/^\/external-api\/?/, '');
@@ -18,7 +19,8 @@ async function handleProxy(req: NextRequest) {
     }
   });
 
-  const body = req.method !== 'GET' && req.method !== 'HEAD' ? await req.arrayBuffer() : undefined;
+  const rawBody = req.method !== 'GET' && req.method !== 'HEAD' ? await req.arrayBuffer() : undefined;
+  const body = rawBody && rawBody.byteLength > 0 ? rawBody : undefined;
 
   let lastError: any = null;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -33,7 +35,10 @@ async function handleProxy(req: NextRequest) {
       const responseBody = await response.arrayBuffer();
       const responseHeaders = new Headers();
       response.headers.forEach((value, key) => {
-        responseHeaders.set(key, value);
+        const k = key.toLowerCase();
+        if (!['content-encoding', 'content-length', 'transfer-encoding', 'connection'].includes(k)) {
+          responseHeaders.set(key, value);
+        }
       });
 
       return new NextResponse(responseBody, {
@@ -57,4 +62,3 @@ export const POST = handleProxy;
 export const PUT = handleProxy;
 export const DELETE = handleProxy;
 export const PATCH = handleProxy;
-

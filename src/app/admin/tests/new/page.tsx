@@ -22,6 +22,9 @@ export default function CreateTestPage() {
     formState: { errors, isSubmitting },
   } = useForm<CreateTestFormSchema>({
     resolver: zodResolver(createTestFormSchema as any),
+    defaultValues: {
+      status: 'active',
+    },
   });
 
   useEffect(() => {
@@ -56,11 +59,14 @@ export default function CreateTestPage() {
     try {
       setLoading(true);
       const testId = await testService.create(formData, adminUser.uid);
+      if (!testId) {
+        throw new Error('No test ID received from server');
+      }
       toast.success('Test created successfully');
       router.push(`/admin/tests/${testId}/questions`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating test:', error);
-      toast.error('Failed to create test');
+      toast.error(error?.message || 'Failed to create test');
     } finally {
       setLoading(false);
     }
