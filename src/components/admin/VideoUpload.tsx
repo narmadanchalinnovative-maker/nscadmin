@@ -82,8 +82,8 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
           setEta('Finalizing & processing on VPS...');
         }
 
-        if (data.completed && data.videoPath) {
-          videoPath = data.videoPath;
+        if ((data.completed && data.videoPath) || data.videoPath || data.url || (data.data && (data.data.videoPath || data.data.url))) {
+          videoPath = data.videoPath || data.url || (data.data && (data.data.videoPath || data.data.url));
         }
       }
 
