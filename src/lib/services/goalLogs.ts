@@ -1,58 +1,33 @@
-import { getDocs, query, collection, orderBy, limit as limitConstraint, doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { ApiService } from '../api-service';
 
 export interface GoalLog {
   id: string;
-  uid: string;
+  uid?: string;
+  userId?: string;
   studentName: string;
   phoneNumber?: string;
   previousGoal: string;
   newGoal: string;
   timestamp: any;
+  createdAt?: any;
 }
 
 export const goalLogsService = {
-  async list(limit = 50): Promise<GoalLog[]> {
-    if (!db) return [];
-
+  async list(limit = 100): Promise<GoalLog[]> {
     try {
-      const q = query(
-        collection(db, 'goal_change_logs'),
-        orderBy('timestamp', 'desc'),
-        limitConstraint(limit)
-      );
-      
-      const snapshot = await getDocs(q);
-      const logs = (snapshot?.docs || []).map(d => ({
+      const res = await ApiService.get(`/admin/data/goal_logs?limit=${limit}`);
+      const rawData = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+      return rawData.map((d: any) => ({
         id: d.id,
-        ...d.data()
-      })) as GoalLog[];
-
-      // Fetch missing phone numbers from the users collection
-      const userCache = new Map<string, string>();
-      
-      for (const log of logs) {
-        if (!log.phoneNumber && log.uid) {
-          if (!userCache.has(log.uid)) {
-            try {
-              const userSnap = await getDoc(doc(db, 'users', log.uid));
-              if (userSnap && typeof userSnap.exists === 'function' && userSnap.exists()) {
-                const userData = userSnap.data();
-                userCache.set(log.uid, userData?.phoneNumber || 'N/A');
-              } else {
-                userCache.set(log.uid, 'N/A');
-              }
-            } catch (e) {
-              userCache.set(log.uid, 'N/A');
-            }
-          }
-          log.phoneNumber = userCache.get(log.uid);
-        }
-      }
-      
-      return logs;
+        uid: d.userId || d.uid,
+        studentName: d.studentName || 'Student',
+        phoneNumber: d.phoneNumber || 'N/A',
+        previousGoal: d.previousGoal || 'None',
+        newGoal: d.newGoal || '',
+        timestamp: d.createdAt || d.timestamp || new Date().toISOString(),
+      }));
     } catch (error) {
-      console.error('Error fetching goal logs:', error);
+      console.error('Error fetching goal logs from API:', error);
       return [];
     }
   }

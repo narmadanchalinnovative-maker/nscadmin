@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, onSnapshot, updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { ApiService } from '@/lib/api-service';
 import { sendSupportTicketMessage, uploadSupportChatMedia } from '@/lib/firestore-service';
 import { useAuth } from '@/lib/auth-context';
 import { X, Send, Image as ImageIcon, Video, Loader2, PlayCircle } from 'lucide-react';
@@ -26,42 +25,37 @@ export default function AdminTicketChatModal({ ticket, onClose }: { ticket: any,
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isVideo, setIsVideo] = useState(false);
 
-  useEffect(() => {
-    if (!db || !ticket?.id) return;
+  const fetchMessages = useCallback(async () => {
+    if (!ticket?.id) return;
     try {
-      updateDoc(doc(db, 'support_tickets', ticket.id), { hasUnreadAdmin: false }).catch(console.error);
-      const q = query(
-        collection(db, 'support_tickets', ticket.id, 'messages'),
-        orderBy('createdAt', 'asc')
-      );
-      const unsubscribe = onSnapshot(
-        q,
-        (snapshot) => {
-          setMessages((snapshot?.docs || []).map((doc) => ({ id: doc.id, ...doc.data() } as Message)));
-          setTimeout(() => {
-            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-          }, 100);
-        },
-        (error) => {
-          console.warn('Support ticket onSnapshot warning:', error);
-        }
-      );
-      return () => unsubscribe();
+      const res = await ApiService.get(`/admin/data/support_tickets/${ticket.id}/messages`);
+      const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+      setMessages(list);
+      setTimeout(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }, 100);
     } catch (e) {
-      console.warn('Support ticket listener setup warning:', e);
+      console.warn('Error fetching support ticket messages:', e);
     }
   }, [ticket?.id]);
+
+  useEffect(() => {
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000);
+    return () => clearInterval(interval);
+  }, [fetchMessages]);
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!text.trim()) return;
+    const msg = text;
+    setText('');
     try {
-      const msg = text;
-      setText('');
       await sendSupportTicketMessage(ticket.id, msg, undefined, undefined, adminUser?.email?.split('@')[0] || 'Admin');
+      await fetchMessages();
     } catch (err) {
       toast.error('Failed to send message');
-      setText(text);
+      setText(msg);
     }
   };
 

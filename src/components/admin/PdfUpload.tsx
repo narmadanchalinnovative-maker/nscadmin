@@ -41,7 +41,12 @@ export function PdfUpload({ value, onChange, storagePath }: PdfUploadProps) {
       
       if (response.ok && data.success) {
         setProgress(100);
-        onChange(data.fileUrl);
+        const uploadedUrl = data.fileUrl || data.url || data.file || data.path || data.data?.fileUrl || data.data?.url;
+        if (!uploadedUrl) {
+          throw new Error('No URL returned from server');
+        }
+        onChange(uploadedUrl);
+        toast.success('PDF uploaded successfully');
       } else {
         throw new Error(data.error || 'Upload failed');
       }
