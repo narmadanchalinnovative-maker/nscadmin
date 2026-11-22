@@ -145,6 +145,80 @@ export interface TestAttempt {
   incorrectCount: number;
   skippedCount: number;
   totalQuestions: number;
+  timeTaken?: string;
+  percentile?: number;
   submittedAt?: any;
 }
+
+export interface PremiumTest extends BaseEntity {
+  isPremium?: boolean;
+  price?: number;
+  originalPrice?: number;
+  discount?: string;
+  examGoalId?: string;
+  examGoal?: string;
+  duration?: number;
+  totalMarks?: number;
+  totalQuestions?: number;
+  validity?: string;
+  language?: string;
+  isDemoAvailable?: boolean;
+  demoTestId?: string;
+  features?: string[];
+  batchId?: string;
+  questions?: Question[];
+}
+
+export interface PremiumPurchase {
+  id: string;
+  userId?: string;
+  userName: string;
+  userPhone: string;
+  userEmail?: string;
+  testId: string;
+  testTitle: string;
+  examGoal?: string;
+  amountPaid: number;
+  originalPrice?: number;
+  discountApplied?: number;
+  couponCode?: string;
+  paymentId?: string;
+  orderId?: string;
+  status: string;
+  purchaseDate?: any;
+  createdAt?: any;
+}
+
+export interface PremiumBanner {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  mediaType: 'image' | 'video' | 'gif';
+  imageUrl?: string;
+  videoUrl?: string;
+  gifUrl?: string;
+  examGoal?: string;
+  badgeText?: string;
+  order?: number;
+  status: 'active' | 'inactive';
+  createdAt?: any;
+}
+
+export interface PremiumCoupon {
+  id?: string;
+  code: string;
+  description?: string;
+  discountType: 'PERCENT' | 'FLAT';
+  discountValue: number;
+  maxDiscount?: number;
+  testId?: string;
+  testTitle?: string;
+  examGoal?: string;
+  minOrderAmount?: number;
+  expiresAt?: string;
+  isActive: boolean;
+  usedCount?: number;
+  createdAt?: any;
+}
+
 

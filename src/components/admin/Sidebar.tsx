@@ -42,7 +42,10 @@ import {
   Check,
   Radio,
   Clock,
-  Layers
+  Layers,
+  Crown,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
@@ -52,10 +55,27 @@ interface MenuItem {
   href: string;
   icon: any;
   requiresPin?: boolean;
+  badge?: string;
+  subItems?: { label: string; href: string; icon: any }[];
 }
 
 const menuItems: MenuItem[] = [
   { label: 'Dashboard', href: '/admin', icon: BarChart3 },
+
+  {
+    label: 'Premium Test Series',
+    href: '/admin/premium-test-series',
+    icon: Crown,
+    badge: 'PRO',
+    subItems: [
+      { label: 'Purchases & Students', href: '/admin/premium-test-series/purchases', icon: Users },
+      { label: 'Manage & Create Tests', href: '/admin/premium-test-series/tests', icon: CheckSquare },
+      { label: 'Banners & Media', href: '/admin/premium-test-series/banners', icon: ImageIcon },
+      { label: 'Test Results', href: '/admin/premium-test-series/results', icon: Activity },
+      { label: 'Test Leaderboard', href: '/admin/premium-test-series/leaderboard', icon: Target },
+      { label: 'Discount Coupons', href: '/admin/premium-test-series/coupons', icon: Tag },
+    ],
+  },
 
   { label: 'Batches', href: '/admin/batches', icon: Users },
   { label: 'Batch Notes', href: '/admin/notes', icon: FileText },
@@ -107,6 +127,9 @@ export function Sidebar() {
   const router = useRouter();
   const { logout, adminUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
+    '/admin/premium-test-series': true,
+  });
 
   // =========================================================================
   // 1. OMNISEARCH MODAL STATE (PostgreSQL tsvector SQL Query)
@@ -399,34 +422,92 @@ export function Sidebar() {
         <nav className="space-y-1.5 flex-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
+            const hasSub = Boolean(item.subItems && item.subItems.length > 0);
+            const isSubActive = hasSub && item.subItems!.some(s => pathname === s.href || pathname.startsWith(s.href));
+            const isActive = item.href === '/admin' ? pathname === '/admin' : pathname === item.href || isSubActive;
+            const isExpanded = expandedItems[item.href] ?? (isActive || isSubActive);
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors group ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-300 hover:bg-slate-800'
-                }`}
-                onClick={(e) => handleItemClick(e, item)}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-4.5 h-4.5 text-slate-400 group-hover:text-white transition-colors" />
-                  <span className="font-medium text-xs sm:text-sm">{item.label}</span>
+              <div key={item.href} className="space-y-1">
+                <div
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors group cursor-pointer ${
+                    isActive && !hasSub
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : isActive && hasSub
+                      ? 'bg-slate-800/95 text-white border border-amber-500/40'
+                      : 'text-gray-300 hover:bg-slate-800'
+                  }`}
+                  onClick={(e) => {
+                    if (hasSub) {
+                      e.preventDefault();
+                      setExpandedItems(prev => ({ ...prev, [item.href]: !isExpanded }));
+                      if (!pathname.startsWith(item.href)) {
+                        router.push(item.href);
+                      }
+                    } else {
+                      handleItemClick(e, item);
+                      router.push(item.href);
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-4.5 h-4.5 ${item.badge === 'PRO' ? 'text-amber-400' : 'text-slate-400 group-hover:text-white'} transition-colors`} />
+                    <span className="font-medium text-xs sm:text-sm">{item.label}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* Badge */}
+                    {item.badge && (
+                      <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-sm">
+                        {item.badge}
+                      </span>
+                    )}
+
+                    {/* Lock Badge for PIN protected item */}
+                    {item.requiresPin && (
+                      <span
+                        title="Protected by Security PIN 991061"
+                        className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 group-hover:bg-amber-500/25 transition-colors"
+                      >
+                        <Lock className="w-2.5 h-2.5" />
+                        <span>PIN</span>
+                      </span>
+                    )}
+
+                    {/* Accordion Chevron */}
+                    {hasSub && (
+                      <span className="text-slate-400 group-hover:text-white transition-transform">
+                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Lock Badge for PIN protected item */}
-                {item.requiresPin && (
-                  <span
-                    title="Protected by Security PIN 991061"
-                    className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 group-hover:bg-amber-500/25 transition-colors"
-                  >
-                    <Lock className="w-2.5 h-2.5" />
-                    <span>PIN</span>
-                  </span>
+                {/* Sub Items Accordion */}
+                {hasSub && isExpanded && (
+                  <div className="pl-3 pr-1 py-1 space-y-1 border-l-2 border-amber-500/40 ml-4 animate-in slide-in-from-top-2 duration-150">
+                    {item.subItems!.map((sub) => {
+                      const SubIcon = sub.icon;
+                      const isThisSubActive = pathname === sub.href || (sub.href !== item.href && pathname.startsWith(sub.href));
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          onClick={() => setIsOpen(false)}
+                          className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                            isThisSubActive
+                              ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40 shadow-xs'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <SubIcon className={`w-3.5 h-3.5 ${isThisSubActive ? 'text-amber-400' : 'text-slate-500'}`} />
+                          <span className="truncate">{sub.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
-              </Link>
+              </div>
             );
           })}
         </nav>
