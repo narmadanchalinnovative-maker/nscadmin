@@ -15,7 +15,10 @@ import {
   Unlock,
   Tag,
   DollarSign,
-  Filter
+  Filter,
+  Copy,
+  Check,
+  Link as LinkIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -58,6 +61,8 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState<number | string>(0);
   const [file, setFile] = useState<File | null>(null);
+  const [pdfUrlInput, setPdfUrlInput] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Fetch courses belonging to this batch
   const fetchBatchCourses = useCallback(async () => {
@@ -105,12 +110,17 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !file) {
-      toast.error('Title and PDF file are required');
+    if (!title.trim()) {
+      toast.error('Title is required');
       return;
     }
 
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    if (!file && !pdfUrlInput.trim()) {
+      toast.error('Please upload a PDF file or provide a PDF URL');
+      return;
+    }
+
+    if (file && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       toast.error('Please upload a valid PDF file');
       return;
     }
@@ -122,29 +132,36 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
     }
 
     try {
-      setIsUploading(true);
-      setProgress(40);
+      let finalPdfUrl = pdfUrlInput.trim();
 
-      // 1. Upload PDF to VPS Storage
-      const formData = new FormData();
-      formData.append('file', file);
+      if (file) {
+        setIsUploading(true);
+        setProgress(40);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/external-api';
-      const uploadRes = await fetch(`${apiUrl}/video/upload-file`, {
-        method: 'POST',
-        body: formData,
-      });
+        // 1. Upload PDF to VPS Storage
+        const formData = new FormData();
+        formData.append('file', file);
 
-      const data = await uploadRes.json();
-      setProgress(85);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/external-api';
+        const uploadRes = await fetch(`${apiUrl}/video/upload-file`, {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (!uploadRes.ok || !data.success) {
-        throw new Error(data.error || data.message || 'File upload failed');
-      }
+        const data = await uploadRes.json();
+        setProgress(85);
 
-      const pdfUrl = data.fileUrl || data.url || data.file || data.path || data.data?.fileUrl || data.data?.url;
-      if (!pdfUrl) {
-        throw new Error('No PDF URL returned by server');
+        if (!uploadRes.ok || !data.success) {
+          throw new Error(data.error || data.message || 'File upload failed');
+        }
+
+        finalPdfUrl = data.fileUrl || data.url || data.file || data.path || data.data?.fileUrl || data.data?.url;
+        if (!finalPdfUrl) {
+          throw new Error('No PDF URL returned by server');
+        }
+      } else {
+        setIsUploading(true);
+        setProgress(50);
       }
 
       // 2. Save note record to PostgreSQL via Admin API
@@ -156,7 +173,7 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
         type,
         isPaid: Boolean(isPaid),
         price: numericPrice,
-        pdfUrl,
+        pdfUrl: finalPdfUrl,
       };
 
       const saveRes = await ApiService.post('/admin/data/batch_notes', notePayload);
@@ -174,6 +191,7 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
       setIsPaid(false);
       setPrice(0);
       setFile(null);
+      setPdfUrlInput('');
 
       // Refresh list immediately
       await fetchNotes();
@@ -373,27 +391,60 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
               />
             </div>
 
-            {/* PDF File Upload */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">PDF File *</label>
-              <input
-                type="file"
-                accept="application/pdf,.pdf"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white text-sm"
-                required
-              />
-              {file && (
-                <p className="text-xs text-slate-500 mt-1">
-                  Selected: <span className="font-semibold text-slate-700">{file.name}</span> ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+            {/* PDF File Upload or URL */}
+            <div className="md:col-span-2 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Upload PDF File</label>
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border bg-white text-sm"
+                />
+                {file && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Selected: <span className="font-semibold text-slate-700">{file.name}</span> ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
+
+              {/* Or PDF URL direct input */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Or PDF Link / URL (Direct Link)
+                </label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 text-slate-400 pointer-events-none">
+                    <LinkIcon className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={pdfUrlInput}
+                    onChange={(e) => setPdfUrlInput(e.target.value)}
+                    placeholder="https://... or /uploads/... (or paste existing PDF URL)"
+                    className="w-full pl-9 pr-16 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none shadow-sm"
+                  />
+                  {pdfUrlInput && (
+                    <button
+                      type="button"
+                      onClick={() => setPdfUrlInput('')}
+                      className="absolute right-2 px-2 py-1 text-xs text-slate-400 hover:text-red-600 hover:bg-slate-100 rounded"
+                      title="Clear URL"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Upload a PDF file above or paste an existing link here to share notes across batches and lectures without re-uploading.
                 </p>
-              )}
+              </div>
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={isUploading || !file || !title.trim()}
+            disabled={isUploading || (!file && !pdfUrlInput.trim()) || !title.trim()}
             className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
           >
             {isUploading ? (
@@ -404,7 +455,7 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
             ) : (
               <>
                 <UploadCloud className="w-4 h-4" />
-                {isPaid ? `Upload Paid Note (₹${price})` : 'Upload Free Note'}
+                {isPaid ? `Save Paid Note (₹${price})` : 'Save Free Note'}
               </>
             )}
           </button>
@@ -528,6 +579,33 @@ export function BatchNotesManager({ batchId }: { batchId: string }) {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const rawUrl = note.pdfUrl || '';
+                      const fullUrl = rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
+                        ? rawUrl
+                        : `http://201.18.192.154:3001${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+                      await navigator.clipboard.writeText(fullUrl);
+                      setCopiedId(note.id);
+                      toast.success('PDF link copied to clipboard!');
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-md transition-colors border border-slate-200"
+                    title="Copy PDF link to reuse in other lectures"
+                  >
+                    {copiedId === note.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-600">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Copy Link</span>
+                      </>
+                    )}
+                  </button>
                   <a
                     href={note.pdfUrl}
                     target="_blank"
